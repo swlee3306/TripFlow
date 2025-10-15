@@ -7,56 +7,8 @@ class TripFlowViewer {
     }
 
     init() {
-        this.initializeSampleFiles();
         this.loadFileList();
         this.setupEventListeners();
-    }
-
-    initializeSampleFiles() {
-        // Check if sample files already exist
-        const existingFiles = JSON.parse(localStorage.getItem('markdownFiles') || '[]');
-        if (existingFiles.length === 0) {
-            // Add sample file
-            const sampleFile = {
-                name: 'sample-trip.md',
-                size: 786,
-                content: `# 제주도 3박 4일 여행
-
-## 1일차 - 제주시
-- **오전**: 제주공항 도착
-- **점심**: 제주시내 맛집 투어
-- **오후**: 제주도립미술관 관람
-- **저녁**: 동문시장 야시장
-
-## 2일차 - 서귀포
-- **오전**: 중문관광단지
-- **점심**: 서귀포 매운맛집
-- **오후**: 천지연폭포
-- **저녁**: 서귀포 칠십리
-
-## 3일차 - 한라산
-- **오전**: 한라산 등반
-- **점심**: 산정상에서 도시락
-- **오후**: 하산 후 휴식
-- **저녁**: 제주시내에서 회식
-
-## 4일차 - 출발
-- **오전**: 마지막 쇼핑
-- **점심**: 공항 근처 식당
-- **오후**: 제주공항 출발
-
-### 예산
-- 항공료: 200,000원
-- 숙박비: 150,000원
-- 식비: 100,000원
-- 교통비: 50,000원
-
-**총 예산: 500,000원**`,
-                uploadTime: new Date().toISOString()
-            };
-            
-            localStorage.setItem('markdownFiles', JSON.stringify([sampleFile]));
-        }
     }
 
     setupEventListeners() {
@@ -108,10 +60,13 @@ class TripFlowViewer {
 
     async loadFileList() {
         try {
-            // Load from localStorage
-            const files = JSON.parse(localStorage.getItem('markdownFiles') || '[]');
-            this.markdownFiles = files;
-            this.renderFileList();
+            const response = await fetch('/api/files');
+            if (response.ok) {
+                this.markdownFiles = await response.json();
+                this.renderFileList();
+            } else {
+                this.showError('파일 목록을 불러올 수 없습니다.');
+            }
         } catch (error) {
             console.error('Error loading file list:', error);
             this.showError('파일 목록을 불러오는 중 오류가 발생했습니다.');
@@ -143,14 +98,12 @@ class TripFlowViewer {
 
     async openFile(filename) {
         try {
-            // Find file in localStorage
-            const files = JSON.parse(localStorage.getItem('markdownFiles') || '[]');
-            const file = files.find(f => f.name === filename);
-            
-            if (file) {
-                this.displayMarkdown(filename, file.content);
+            const response = await fetch(`/api/files/${filename}`);
+            if (response.ok) {
+                const content = await response.text();
+                this.displayMarkdown(filename, content);
             } else {
-                this.showError('파일을 찾을 수 없습니다.');
+                this.showError('파일을 불러올 수 없습니다.');
             }
         } catch (error) {
             console.error('Error opening file:', error);
@@ -218,40 +171,29 @@ class TripFlowViewer {
             return;
         }
 
-        this.showUploadStatus('uploading', '파일을 처리 중...');
+        const formData = new FormData();
+        formData.append('file', file);
+
+        this.showUploadStatus('uploading', '업로드 중...');
 
         try {
-            // Read file content
-            const content = await this.readFileContent(file);
-            
-            // Store file in localStorage for demo purposes
-            const fileData = {
-                name: file.name,
-                size: file.size,
-                content: content,
-                uploadTime: new Date().toISOString()
-            };
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
 
-            // Get existing files
-            let files = JSON.parse(localStorage.getItem('markdownFiles') || '[]');
-            files.push(fileData);
-            localStorage.setItem('markdownFiles', JSON.stringify(files));
+            const result = await response.json();
 
-            this.showUploadStatus('success', `파일이 성공적으로 저장되었습니다: ${file.name}`);
-            this.loadFileList(); // Refresh file list
+            if (response.ok) {
+                this.showUploadStatus('success', `파일이 성공적으로 업로드되었습니다: ${result.filename}`);
+                this.loadFileList(); // Refresh file list
+            } else {
+                this.showUploadStatus('error', result.message || '업로드 중 오류가 발생했습니다.');
+            }
         } catch (error) {
             console.error('Upload error:', error);
-            this.showUploadStatus('error', '파일 처리 중 오류가 발생했습니다.');
+            this.showUploadStatus('error', '네트워크 오류가 발생했습니다. 다시 시도해주세요.');
         }
-    }
-
-    readFileContent(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = (e) => reject(e);
-            reader.readAsText(file);
-        });
     }
 
     showUploadStatus(type, message) {

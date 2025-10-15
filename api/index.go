@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -90,6 +92,21 @@ func initRouter() {
 			c.JSON(200, files)
 		})
 
+		// Get specific markdown file
+		api.GET("/files/:filename", func(c *gin.Context) {
+			filename := c.Param("filename")
+			content, err := getMarkdownFile(filename)
+			if err != nil {
+				c.JSON(404, gin.H{
+					"error": "File not found",
+					"message": "파일을 찾을 수 없습니다",
+				})
+				return
+			}
+			c.Header("Content-Type", "text/plain; charset=utf-8")
+			c.String(200, content)
+		})
+
 		// Upload markdown file
 		api.POST("/upload", func(c *gin.Context) {
 			file, err := c.FormFile("file")
@@ -120,9 +137,28 @@ func initRouter() {
 				return
 			}
 
-			// Save file to markdown-files directory
-			uploadPath := filepath.Join("frontend/public/markdown-files", file.Filename)
-			if err := c.SaveUploadedFile(file, uploadPath); err != nil {
+			// Read file content
+			src, err := file.Open()
+			if err != nil {
+				c.JSON(500, gin.H{
+					"error": "Failed to read file",
+					"message": "파일 읽기 중 오류가 발생했습니다",
+				})
+				return
+			}
+			defer src.Close()
+
+			content, err := ioutil.ReadAll(src)
+			if err != nil {
+				c.JSON(500, gin.H{
+					"error": "Failed to read file content",
+					"message": "파일 내용 읽기 중 오류가 발생했습니다",
+				})
+				return
+			}
+
+			// Save to JSON database
+			if err := saveMarkdownFile(file.Filename, string(content), file.Size); err != nil {
 				c.JSON(500, gin.H{
 					"error": "Failed to save file",
 					"message": "파일 저장 중 오류가 발생했습니다",
@@ -140,29 +176,43 @@ func initRouter() {
 	}
 }
 
-// getMarkdownFiles returns a list of markdown files
+// MarkdownFile represents a markdown file in the database
+type MarkdownFile struct {
+	Filename  string `json:"filename"`
+	Content   string `json:"content"`
+	Size      int64  `json:"size"`
+	CreatedAt string `json:"created_at"`
+}
+
+// getMarkdownFiles returns a list of markdown files from JSON database
 func getMarkdownFiles() ([]gin.H, error) {
-	markdownDir := "frontend/public/markdown-files"
-	if _, err := os.Stat(markdownDir); os.IsNotExist(err) {
+	dbPath := "frontend/public/markdown-files/database.json"
+	
+	// Check if database exists
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		return []gin.H{}, nil
 	}
 
-	files, err := ioutil.ReadDir(markdownDir)
+	// Read database file
+	data, err := ioutil.ReadFile(dbPath)
 	if err != nil {
 		return nil, err
 	}
 
-	var markdownFiles []gin.H
-	for _, file := range files {
-		if !file.IsDir() && (strings.HasSuffix(file.Name(), ".md") || strings.HasSuffix(file.Name(), ".markdown")) {
-			markdownFiles = append(markdownFiles, gin.H{
-				"name": file.Name(),
-				"size": file.Size(),
-			})
-		}
+	var files []MarkdownFile
+	if err := json.Unmarshal(data, &files); err != nil {
+		return nil, err
 	}
 
-	return markdownFiles, nil
+	var result []gin.H
+	for _, file := range files {
+		result = append(result, gin.H{
+			"name": file.Filename,
+			"size": file.Size,
+		})
+	}
+
+	return result, nil
 }
 
 // getMarkdownFile returns the content of a specific markdown file
@@ -172,13 +222,74 @@ func getMarkdownFile(filename string) (string, error) {
 		return "", fmt.Errorf("invalid filename")
 	}
 
-	filePath := filepath.Join("frontend/public/markdown-files", filename)
-	content, err := ioutil.ReadFile(filePath)
+	dbPath := "frontend/public/markdown-files/database.json"
+	
+	// Read database file
+	data, err := ioutil.ReadFile(dbPath)
 	if err != nil {
 		return "", err
 	}
 
-	return string(content), nil
+	var files []MarkdownFile
+	if err := json.Unmarshal(data, &files); err != nil {
+		return "", err
+	}
+
+	// Find the file
+	for _, file := range files {
+		if file.Filename == filename {
+			return file.Content, nil
+		}
+	}
+
+	return "", fmt.Errorf("file not found")
+}
+
+// saveMarkdownFile saves a markdown file to the JSON database
+func saveMarkdownFile(filename, content string, size int64) error {
+	dbPath := "frontend/public/markdown-files/database.json"
+	
+	// Ensure directory exists
+	if err := os.MkdirAll("frontend/public/markdown-files", 0755); err != nil {
+		return err
+	}
+
+	var files []MarkdownFile
+	
+	// Read existing database if it exists
+	if data, err := ioutil.ReadFile(dbPath); err == nil {
+		json.Unmarshal(data, &files)
+	}
+
+	// Check if file already exists and update it
+	found := false
+	for i, file := range files {
+		if file.Filename == filename {
+			files[i].Content = content
+			files[i].Size = size
+			files[i].CreatedAt = time.Now().Format(time.RFC3339)
+			found = true
+			break
+		}
+	}
+
+	// Add new file if not found
+	if !found {
+		files = append(files, MarkdownFile{
+			Filename:  filename,
+			Content:   content,
+			Size:      size,
+			CreatedAt: time.Now().Format(time.RFC3339),
+		})
+	}
+
+	// Write back to database
+	data, err := json.MarshalIndent(files, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(dbPath, data, 0644)
 }
 
 // main function for local testing only
