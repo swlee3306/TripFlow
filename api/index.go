@@ -85,9 +85,21 @@ func initRouter() {
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
+		redisStatus := "disconnected"
+		if redisClient != nil {
+			ctx := context.Background()
+			_, err := redisClient.Ping(ctx).Result()
+			if err == nil {
+				redisStatus = "connected"
+			} else {
+				redisStatus = "error: " + err.Error()
+			}
+		}
+		
 		c.JSON(200, gin.H{
 			"status": "ok",
 			"message": "TripFlow API is running",
+			"redis": redisStatus,
 		})
 	})
 
@@ -190,11 +202,13 @@ func initRouter() {
 				return
 			}
 
-			// Save to Vercel KV
+			// Save to Redis
 			if err := saveMarkdownFile(file.Filename, string(content), file.Size); err != nil {
+				log.Printf("Failed to save file: %v", err)
 				c.JSON(500, gin.H{
 					"error": "Failed to save file",
 					"message": "파일 저장 중 오류가 발생했습니다",
+					"details": err.Error(),
 				})
 				return
 			}
@@ -257,18 +271,22 @@ func getMarkdownFile(filename string) (string, error) {
 	return content, nil
 }
 
-// saveMarkdownFile saves a markdown file to Vercel KV
+// saveMarkdownFile saves a markdown file to Redis
 func saveMarkdownFile(filename, content string, size int64) error {
-	// Store file content in KV
+	// Store file content in Redis
 	if err := kvSet("file:"+filename, content); err != nil {
-		return err
+		log.Printf("Failed to save file content to Redis: %v", err)
+		return fmt.Errorf("Redis 저장 실패: %v", err)
 	}
 
 	// Update file list
 	fileList, err := kvGet("files:list")
 	var files []MarkdownFile
-	if err == nil {
-		json.Unmarshal([]byte(fileList), &files)
+	if err == nil && fileList != "" {
+		if err := json.Unmarshal([]byte(fileList), &files); err != nil {
+			log.Printf("Failed to unmarshal file list: %v", err)
+			files = []MarkdownFile{}
+		}
 	}
 
 	// Check if file already exists and update it
@@ -296,10 +314,16 @@ func saveMarkdownFile(filename, content string, size int64) error {
 	// Save updated file list
 	fileListData, err := json.Marshal(files)
 	if err != nil {
-		return err
+		log.Printf("Failed to marshal file list: %v", err)
+		return fmt.Errorf("파일 목록 직렬화 실패: %v", err)
 	}
 
-	return kvSet("files:list", string(fileListData))
+	if err := kvSet("files:list", string(fileListData)); err != nil {
+		log.Printf("Failed to save file list to Redis: %v", err)
+		return fmt.Errorf("파일 목록 저장 실패: %v", err)
+	}
+
+	return nil
 }
 
 // kvGet retrieves a value from Redis Cloud
