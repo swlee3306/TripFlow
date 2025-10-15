@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,30 +18,13 @@ import (
 // Global router instance for serverless optimization
 var router *gin.Engine
 
-// Redis configuration (encoded for security)
-var encodedRedisURL = "cmVkaXM6Ly9kZWZhdWx0OjI3TUtMMjdHMFBYY1ZFVXZXU2hKT01uYmd0SWJ0S0ByZWRpcy0xNzkyOC5jNTcudXMtZWFzdC0xLTQuZWMyLnJlZG5zLnJlZGlzLWNsb3VkLmNvbToxNzkyOA=="
+// Redis configuration
+var redisURL = "redis://default:27MKL27G0P2cVEUvV7WShJOMnbgtIbtK@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
 var redisClient *redis.Client
-
-// decodeRedisURL decodes the base64 encoded Redis URL
-func decodeRedisURL() string {
-	decoded, err := base64.StdEncoding.DecodeString(encodedRedisURL)
-	if err != nil {
-		log.Printf("Failed to decode Redis URL: %v", err)
-		return ""
-	}
-	return string(decoded)
-}
 
 // initRedis initializes Redis client
 func initRedis() {
 	log.Printf("Initializing Redis connection...")
-	
-	// Decode Redis URL
-	redisURL := decodeRedisURL()
-	if redisURL == "" {
-		log.Printf("Failed to decode Redis URL")
-		return
-	}
 	
 	// Parse Redis URL
 	opt, err := redis.ParseURL(redisURL)
