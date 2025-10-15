@@ -78,19 +78,52 @@ func main() {
 			c.JSON(200, files)
 		})
 
-		// Get specific markdown file
-		api.GET("/files/:filename", func(c *gin.Context) {
-			filename := c.Param("filename")
-			content, err := getMarkdownFile(filename)
+		// Upload markdown file
+		api.POST("/upload", func(c *gin.Context) {
+			file, err := c.FormFile("file")
 			if err != nil {
-				c.JSON(404, gin.H{
-					"error": "File not found",
-					"message": "파일을 찾을 수 없습니다",
+				c.JSON(400, gin.H{
+					"error": "No file uploaded",
+					"message": "파일을 선택해주세요",
 				})
 				return
 			}
-			c.Header("Content-Type", "text/plain; charset=utf-8")
-			c.String(200, content)
+
+			// Validate file type
+			allowedTypes := []string{".md", ".markdown"}
+			fileExt := filepath.Ext(file.Filename)
+			isValidType := false
+			for _, ext := range allowedTypes {
+				if fileExt == ext {
+					isValidType = true
+					break
+				}
+			}
+
+			if !isValidType {
+				c.JSON(400, gin.H{
+					"error": "Invalid file type",
+					"message": "마크다운 파일만 업로드 가능합니다",
+				})
+				return
+			}
+
+			// Save file to markdown-files directory
+			uploadPath := filepath.Join("frontend/public/markdown-files", file.Filename)
+			if err := c.SaveUploadedFile(file, uploadPath); err != nil {
+				c.JSON(500, gin.H{
+					"error": "Failed to save file",
+					"message": "파일 저장 중 오류가 발생했습니다",
+				})
+				return
+			}
+
+			c.JSON(200, gin.H{
+				"success": true,
+				"filename": file.Filename,
+				"size": file.Size,
+				"message": "파일이 성공적으로 업로드되었습니다",
+			})
 		})
 	}
 
