@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,49 +19,17 @@ import (
 var router *gin.Engine
 
 // Redis configuration
-var redisURL = os.Getenv("REDIS_URL")
+var redisURL = "redis://default:27MKL27G0P2cVEUvV7WShJOMnbgtIbtK@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
 var redisClient *redis.Client
 
 // initRedis initializes Redis client
 func initRedis() {
-	if redisURL == "" {
-		log.Printf("Redis URL not configured")
-		return
-	}
+	log.Printf("Initializing Redis connection...")
 	
-	log.Printf("Redis URL: %s", redisURL)
-	
-	// Parse Redis URL manually to handle Redis Cloud format
-	// redis://default:password@host:port
+	// Parse Redis URL
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		log.Printf("Failed to parse Redis URL: %v", err)
-		// Try manual parsing for Redis Cloud
-		if strings.HasPrefix(redisURL, "redis://") {
-			// Extract components manually
-			parts := strings.Split(redisURL, "@")
-			if len(parts) == 2 {
-				authPart := strings.TrimPrefix(parts[0], "redis://")
-				hostPart := parts[1]
-				
-				authParts := strings.Split(authPart, ":")
-				if len(authParts) == 2 {
-					username := authParts[0]
-					password := authParts[1]
-					
-					opt = &redis.Options{
-						Addr:     hostPart,
-						Username: username,
-						Password: password,
-					}
-					log.Printf("Manual Redis config: %s@%s", username, hostPart)
-				}
-			}
-		}
-	}
-	
-	if opt == nil {
-		log.Printf("Failed to create Redis options")
 		return
 	}
 	
@@ -309,9 +276,7 @@ func saveMarkdownFile(filename, content string, size int64) error {
 	// Store file content in Redis
 	if err := kvSet("file:"+filename, content); err != nil {
 		log.Printf("Failed to save file content to Redis: %v", err)
-		// Redis 연결 실패 시 임시로 성공 처리 (나중에 Redis 설정 후 다시 시도)
-		log.Printf("Redis 연결 실패로 인해 파일 저장을 건너뜁니다. Redis 환경 변수를 확인해주세요.")
-		return nil // 임시로 성공 처리
+		return fmt.Errorf("Redis 저장 실패: %v", err)
 	}
 
 	// Update file list
@@ -355,9 +320,7 @@ func saveMarkdownFile(filename, content string, size int64) error {
 
 	if err := kvSet("files:list", string(fileListData)); err != nil {
 		log.Printf("Failed to save file list to Redis: %v", err)
-		// Redis 연결 실패 시 임시로 성공 처리
-		log.Printf("Redis 연결 실패로 인해 파일 목록 저장을 건너뜁니다.")
-		return nil // 임시로 성공 처리
+		return fmt.Errorf("파일 목록 저장 실패: %v", err)
 	}
 
 	return nil
