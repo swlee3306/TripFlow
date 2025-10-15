@@ -371,13 +371,15 @@ class TripFlowApp {
             // Check if content is Markdown (simple heuristic)
             const isMarkdown = this.isMarkdownContent(content);
             
-            if (isMarkdown) {
+            if (isMarkdown && typeof marked !== 'undefined') {
                 // Convert Markdown to HTML using marked.js
                 content = marked.parse(content);
             }
             
             // Sanitize HTML using DOMPurify
-            content = DOMPurify.sanitize(content);
+            if (typeof DOMPurify !== 'undefined') {
+                content = DOMPurify.sanitize(content);
+            }
             
             // Apply custom styling classes
             contentElement.innerHTML = this.applyContentStyling(content);
@@ -500,7 +502,11 @@ class TripFlowApp {
 
     // Initialize the application when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
-        new TripFlowApp();
+        try {
+            new TripFlowApp();
+        } catch (error) {
+            console.error('TripFlow App initialization error:', error);
+        }
     });
 
 // Utility functions for future use
