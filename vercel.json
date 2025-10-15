@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/index.go": {
-      "runtime": "@vercel/go@3.2.3"
+      "runtime": "@vercel/go@2.0.0"
     }
   },
   "routes": [
@@ -15,10 +15,6 @@
       "dest": "/frontend/public/$1"
     }
   ],
-  "installCommand": "cd frontend && npm install",
   "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/public",
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "outputDirectory": "frontend/public"
 }
