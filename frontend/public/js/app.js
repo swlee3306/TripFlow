@@ -65,11 +65,11 @@ class TripFlowViewer {
                 this.markdownFiles = await response.json();
                 this.renderFileList();
             } else {
-                this.showError('파일 목록을 불러올 수 없습니다.');
+                this.showError('여행 계획 목록을 불러올 수 없습니다.');
             }
         } catch (error) {
             console.error('Error loading file list:', error);
-            this.showError('파일 목록을 불러오는 중 오류가 발생했습니다.');
+            this.showError('여행 계획 목록을 불러오는 중 오류가 발생했습니다.');
         }
     }
 
@@ -78,7 +78,7 @@ class TripFlowViewer {
         if (!fileList) return;
 
         if (this.markdownFiles.length === 0) {
-            fileList.innerHTML = '<p class="text-gray-500 col-span-full">마크다운 파일이 없습니다.</p>';
+            fileList.innerHTML = '<p class="text-gray-500 col-span-full">공유된 여행 계획이 없습니다.</p>';
             return;
         }
 
@@ -91,7 +91,7 @@ class TripFlowViewer {
                     <h3 class="font-medium text-gray-900">${file.name}</h3>
                 </div>
                 <p class="text-sm text-gray-500">${file.size} bytes</p>
-                <p class="text-xs text-gray-400 mt-1">클릭하여 읽기</p>
+                <p class="text-xs text-gray-400 mt-1">클릭하여 여행 계획 보기</p>
             </div>
         `).join('');
     }
