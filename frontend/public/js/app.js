@@ -60,7 +60,7 @@ class TripFlowViewer {
 
     async openFile(filename) {
         try {
-            const response = await fetch(`/api/files/${filename}`);
+            const response = await fetch(`/markdown-files/${filename}`);
             if (response.ok) {
                 const content = await response.text();
                 this.displayMarkdown(filename, content);

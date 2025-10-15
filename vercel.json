@@ -11,6 +11,10 @@
       "dest": "/api/index.go"
     },
     {
+      "src": "/markdown-files/(.*)",
+      "dest": "/frontend/public/markdown-files/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/public/$1"
     }
