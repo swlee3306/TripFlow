@@ -128,10 +128,17 @@ class TripFlowViewer {
         }
 
         if (contentElement) {
-            // Convert Markdown to HTML
             let htmlContent = content;
-            if (typeof marked !== 'undefined') {
+            
+            // Check if it's a markdown file
+            const isMarkdown = filename.toLowerCase().endsWith('.md') || filename.toLowerCase().endsWith('.markdown');
+            
+            if (isMarkdown && typeof marked !== 'undefined') {
+                // Render as markdown
                 htmlContent = marked.parse(content);
+            } else {
+                // Render as plain text with line breaks
+                htmlContent = content.replace(/\n/g, '<br>');
             }
 
             // Sanitize HTML
@@ -206,11 +213,11 @@ class TripFlowViewer {
 
     async handleFileUpload(file) {
         // Validate file type
-        const allowedTypes = ['.md', '.markdown'];
+        const allowedTypes = ['.md', '.markdown', '.txt'];
         const fileExt = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
         
         if (!allowedTypes.includes(fileExt)) {
-            this.showUploadStatus('error', '마크다운 파일만 업로드 가능합니다.');
+            this.showUploadStatus('error', '마크다운 또는 텍스트 파일만 업로드 가능합니다.');
             return;
         }
 
