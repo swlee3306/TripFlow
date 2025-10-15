@@ -152,6 +152,37 @@ func initRouter() {
 			c.String(200, content)
 		})
 
+		// Delete markdown file
+		api.DELETE("/files/:filename", func(c *gin.Context) {
+			filename := c.Param("filename")
+			
+			// Security check: prevent directory traversal
+			if strings.Contains(filename, "..") || strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
+				c.JSON(400, gin.H{
+					"error": "Invalid filename",
+					"message": "잘못된 파일명입니다",
+				})
+				return
+			}
+			
+			// Delete file from Redis
+			if err := deleteMarkdownFile(filename); err != nil {
+				log.Printf("Failed to delete file: %v", err)
+				c.JSON(500, gin.H{
+					"error": "Failed to delete file",
+					"message": "파일 삭제 중 오류가 발생했습니다",
+					"details": err.Error(),
+				})
+				return
+			}
+			
+			c.JSON(200, gin.H{
+				"success": true,
+				"filename": filename,
+				"message": "파일이 성공적으로 삭제되었습니다",
+			})
+		})
+
 		// Upload markdown file
 		api.POST("/upload", func(c *gin.Context) {
 			file, err := c.FormFile("file")
@@ -326,6 +357,47 @@ func saveMarkdownFile(filename, content string, size int64) error {
 	return nil
 }
 
+// deleteMarkdownFile deletes a markdown file from Redis
+func deleteMarkdownFile(filename string) error {
+	// Delete file content from Redis
+	if err := kvDelete("file:" + filename); err != nil {
+		log.Printf("Failed to delete file content from Redis: %v", err)
+		return fmt.Errorf("Redis 파일 삭제 실패: %v", err)
+	}
+
+	// Update file list
+	fileList, err := kvGet("files:list")
+	var files []MarkdownFile
+	if err == nil && fileList != "" {
+		if err := json.Unmarshal([]byte(fileList), &files); err != nil {
+			log.Printf("Failed to unmarshal file list: %v", err)
+			files = []MarkdownFile{}
+		}
+	}
+
+	// Remove file from list
+	var updatedFiles []MarkdownFile
+	for _, file := range files {
+		if file.Filename != filename {
+			updatedFiles = append(updatedFiles, file)
+		}
+	}
+
+	// Save updated file list
+	fileListData, err := json.Marshal(updatedFiles)
+	if err != nil {
+		log.Printf("Failed to marshal file list: %v", err)
+		return fmt.Errorf("파일 목록 직렬화 실패: %v", err)
+	}
+
+	if err := kvSet("files:list", string(fileListData)); err != nil {
+		log.Printf("Failed to save file list to Redis: %v", err)
+		return fmt.Errorf("파일 목록 저장 실패: %v", err)
+	}
+
+	return nil
+}
+
 // kvGet retrieves a value from Redis Cloud
 func kvGet(key string) (string, error) {
 	if redisClient == nil {
@@ -352,6 +424,21 @@ func kvSet(key, value string) error {
 
 	ctx := context.Background()
 	err := redisClient.Set(ctx, key, value, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// kvDelete deletes a key from Redis Cloud
+func kvDelete(key string) error {
+	if redisClient == nil {
+		return fmt.Errorf("Redis not configured")
+	}
+
+	ctx := context.Background()
+	err := redisClient.Del(ctx, key).Err()
 	if err != nil {
 		return err
 	}
