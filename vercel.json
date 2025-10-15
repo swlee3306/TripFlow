@@ -20,5 +20,10 @@
   "outputDirectory": "frontend/public",
   "env": {
     "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "GO_VERSION": "1.20"
+    }
   }
 }
