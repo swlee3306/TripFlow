@@ -18,6 +18,44 @@ class TripFlowViewer {
                 this.hideViewer();
             });
         }
+
+        // Upload functionality
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    this.handleFileUpload(e.target.files[0]);
+                }
+            });
+        }
+
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('border-blue-400', 'bg-blue-50');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    this.handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+        }
     }
 
     async loadFileList() {
@@ -114,6 +152,85 @@ class TripFlowViewer {
         const fileList = document.getElementById('file-list');
         if (fileList) {
             fileList.innerHTML = `<p class="text-red-500 col-span-full">${message}</p>`;
+        }
+    }
+
+    async handleFileUpload(file) {
+        // Validate file type
+        const allowedTypes = ['.md', '.markdown'];
+        const fileExt = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        
+        if (!allowedTypes.includes(fileExt)) {
+            this.showUploadStatus('error', '마크다운 파일만 업로드 가능합니다.');
+            return;
+        }
+
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            this.showUploadStatus('error', '파일 크기는 10MB를 초과할 수 없습니다.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        this.showUploadStatus('uploading', '업로드 중...');
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showUploadStatus('success', `파일이 성공적으로 업로드되었습니다: ${result.filename}`);
+                this.loadFileList(); // Refresh file list
+            } else {
+                this.showUploadStatus('error', result.message || '업로드 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.showUploadStatus('error', '네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
+
+    showUploadStatus(type, message) {
+        const statusElement = document.getElementById('upload-status');
+        if (!statusElement) return;
+
+        statusElement.classList.remove('hidden');
+        
+        let statusClass = '';
+        let icon = '';
+        
+        switch (type) {
+            case 'success':
+                statusClass = 'bg-green-50 border-green-200 text-green-800';
+                icon = '✓';
+                break;
+            case 'error':
+                statusClass = 'bg-red-50 border-red-200 text-red-800';
+                icon = '✗';
+                break;
+            case 'uploading':
+                statusClass = 'bg-blue-50 border-blue-200 text-blue-800';
+                icon = '⏳';
+                break;
+        }
+
+        statusElement.innerHTML = `
+            <div class="border rounded-md p-3 ${statusClass}">
+                <span class="font-medium">${icon} ${message}</span>
+            </div>
+        `;
+
+        // Auto-hide success messages after 3 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                statusElement.classList.add('hidden');
+            }, 3000);
         }
     }
 }
