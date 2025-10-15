@@ -1,0 +1,12 @@
+RewriteEngine On
+
+# Handle /s/:id routes
+RewriteRule ^s/([a-f0-9-]+)/?$ schedule.html [L]
+
+# Handle root redirect
+RewriteRule ^$ index.html [L]
+
+# Handle other static files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.html [L]

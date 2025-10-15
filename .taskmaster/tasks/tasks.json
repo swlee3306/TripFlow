@@ -1,0 +1,1142 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Backend Project Setup and Core Infrastructure",
+        "description": "Initialize the Go backend project, set up the Gin web framework, and configure basic server structure and environment management.",
+        "details": "Initialize a new Go module (`go mod init tripflow`). Set up Gin-Gonic (`go get github.com/gin-gonic/gin@v1.9.1`). Create a main server file (`main.go`) to initialize Gin, define basic routes (e.g., health check), and start the server. Implement configuration loading using environment variables (e.g., `os.Getenv` or `github.com/joho/godotenv@v1.5.1` for local development). Establish a clear directory structure for handlers, models, services, and middleware. Implement structured logging using Go's `log` package or `zap` for production readiness.",
+        "testStrategy": "Run `go run main.go` and verify the server starts without errors. Access a basic endpoint (e.g., `/health`) to confirm it's reachable and returns expected status. Ensure environment variables are loaded correctly.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Go Module and Install Gin Framework",
+            "description": "Create the Go module for the project and add Gin-Gonic as a core web framework dependency.",
+            "dependencies": [],
+            "details": "Execute `go mod init tripflow` in the project root directory. After initializing the module, run `go get github.com/gin-gonic/gin@v1.9.1` to fetch and add Gin-Gonic to the project's `go.mod` and `go.sum` files.",
+            "status": "done",
+            "testStrategy": "Verify that `go.mod` and `go.sum` files are created in the project root and that `github.com/gin-gonic/gin` with version `v1.9.1` is listed as a dependency."
+          },
+          {
+            "id": 2,
+            "title": "Develop Main Server Entrypoint and Basic Run Logic",
+            "description": "Create the main entry point for the backend application (`main.go`), initialize the Gin engine, and implement the basic server startup mechanism.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a `main.go` file at the project root. Inside `main.go`, import the `github.com/gin-gonic/gin` package. Initialize the Gin engine using `gin.Default()`. Configure the server to listen on a default port (e.g., 8080) using `router.Run(\":8080\")`.",
+            "status": "done",
+            "testStrategy": "Run the application using `go run main.go`. Verify that the console output indicates the Gin server has started successfully and is listening on the specified port without any errors."
+          },
+          {
+            "id": 3,
+            "title": "Implement Health Check Endpoint and Basic Routing",
+            "description": "Add a simple `/health` GET endpoint to the Gin router to confirm the server is operational and responding to requests, establishing basic routing.",
+            "dependencies": [
+              2
+            ],
+            "details": "In the `main.go` file, after initializing the Gin engine, define a `router.GET(\"/health\", func(c *gin.Context) { ... })` route. The handler function for this endpoint should return an HTTP 200 OK status along with a simple JSON response, such as `{\"status\": \"ok\"}`.",
+            "status": "done",
+            "testStrategy": "Start the server (`go run main.go`). Use `curl http://localhost:[PORT]/health` or a web browser to access the `/health` endpoint. Confirm that the endpoint returns an HTTP 200 status code and the expected `{\"status\": \"ok\"}` JSON response."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Environment Variable Configuration Management",
+            "description": "Set up the application to load configuration parameters primarily from environment variables, with support for local `.env` files during development.",
+            "dependencies": [
+              2
+            ],
+            "details": "Install `github.com/joho/godotenv@v1.5.1` for local `.env` file support. Create a `config` package (e.g., `internal/config`) or a `config.go` file. Implement a `LoadConfig()` function that attempts to load variables from a `.env` file first (if it exists) and then uses `os.Getenv` to retrieve or override values. Define a `Config` struct to hold parsed configuration (e.g., `Port string`, `Environment string`). Integrate `LoadConfig()` into `main.go` to load configuration before the server starts, and use the loaded port for `router.Run()`.",
+            "status": "done",
+            "testStrategy": "Create a `.env` file with `PORT=8080`. Run the server and confirm it listens on port 8080. Test by removing the `.env` file and setting a system environment variable `PORT=8081` to confirm it runs on 8081. Verify `os.Getenv` works correctly for other example variables."
+          },
+          {
+            "id": 5,
+            "title": "Establish Core Directory Structure and Implement Structured Logging",
+            "description": "Define a clear and maintainable directory structure for the backend project and integrate a structured logging solution for enhanced observability.",
+            "dependencies": [
+              2,
+              4
+            ],
+            "details": "Create the following directory structure: `cmd/api/` (for `main.go`), `internal/handlers/`, `internal/models/`, `internal/services/`, `internal/middleware/`, `pkg/`. Move `main.go` into `cmd/api/main.go`. Install `go.uber.org/zap@v1.26.0` for structured logging. Create a `logger` package (e.g., `pkg/logger`) that initializes a global `zap.SugaredLogger` instance based on application configuration (e.g., `debug` for development, `info` for production). Replace standard `fmt.Println` or `log.Printf` calls in `main.go` and any existing handlers with structured log calls using the new logger.",
+            "status": "done",
+            "testStrategy": "Verify the creation of all specified directories. Run the server and observe the console output to confirm that log messages (e.g., server startup messages) are now structured and include metadata. Test changing the `LOG_LEVEL` configuration (e.g., in `.env`) to ensure log verbosity is correctly adjusted (e.g., debug messages appear/disappear)."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Database Setup and Migration System",
+        "description": "Configure GORM for database interaction with SQLite, optimized for Vercel serverless functions, and implement a database migration system.",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "details": "Integrate GORM (`go get gorm.io/gorm@v1.25.5` and `gorm.io/driver/sqlite@v1.5.4`). Define the `schedules` and `files` Go structs corresponding to the provided SQL schemas, including GORM tags for mapping. Implement database connection logic for SQLite only, ensuring the database file is stored in the `/tmp` directory (e.g., `/tmp/tripflow.db`) as required by Vercel serverless functions. Set up a migration tool like `github.com/golang-migrate/migrate/v4` (`go get github.com/golang-migrate/migrate/v4/cmd/migrate`) to manage schema changes for the SQLite database. Create initial migration files for `schedules` and `files` tables using the provided DDL. Use `github.com/google/uuid@v1.4.0` for generating `id` values.",
+        "testStrategy": "Run migrations in development (SQLite) to create tables and verify schema. Verify that the SQLite database file is correctly created and accessible in the `/tmp` directory. Write unit tests for GORM model interactions (e.g., `db.Create`, `db.Find`) targeting the SQLite database.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install GORM and SQLite Driver",
+            "description": "Add GORM and its SQLite driver to the project's Go modules to enable database interaction.",
+            "dependencies": [],
+            "details": "Execute `go get gorm.io/gorm@v1.25.5` and `go get gorm.io/driver/sqlite@v1.5.4` in the project root. Ensure the `go.mod` and `go.sum` files are updated with these dependencies.",
+            "status": "done",
+            "testStrategy": "Verify that `go.mod` and `go.sum` files are updated correctly and that `go mod tidy` runs without errors."
+          },
+          {
+            "id": 2,
+            "title": "Define GORM Models for Schedules and Files",
+            "description": "Create Go structs for `Schedule` and `File` that map to the database tables, including GORM tags and `uuid.UUID` types for primary keys and foreign keys.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create `internal/models/schedule.go` and `internal/models/file.go`. Implement `Schedule` and `File` structs with fields such as `ID`, `CreatedAt`, `UpdatedAt`, `DeletedAt` (for soft delete), and specific fields for `schedules` (e.g., `UserID`, `Title`, `Description`, `IsPublic`, `FileID`) and `files` (e.g., `UserID`, `Filename`, `FilePath`, `FileSize`, `UploadDate`). Use `gorm:\"primaryKey;type:uuid\"` for `ID` and `gorm:\"type:uuid\"` for `FileID` in `Schedule`. Import `github.com/google/uuid@v1.4.0` for `uuid.UUID` type.",
+            "status": "done",
+            "testStrategy": "Create a temporary test file to instantiate these structs, assign some values including UUIDs, and print them to ensure no compilation errors and GORM tags are correctly recognized. Verify `go run .` or similar command compiles without errors."
+          },
+          {
+            "id": 3,
+            "title": "Implement SQLite Database Connection Logic",
+            "description": "Develop a function to establish a GORM connection to an SQLite database, ensuring the database file is stored in the `/tmp` directory as required by Vercel serverless functions.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Create a new package (e.g., `internal/database`) and implement a function like `ConnectDB()` that returns `(*gorm.DB, error)`. This function should use `sqlite.Open(\"/tmp/tripflow.db\")` to open the database connection. Configure GORM with appropriate settings and error handling for connection failures. For initial development, consider adding `db.AutoMigrate(&models.Schedule{}, &models.File{})` but note this will be replaced by the migration system later. Include `db.Logger = logger.Default.LogMode(logger.Info)` for GORM logging.",
+            "status": "done",
+            "testStrategy": "Write a `main` function or a dedicated test function that calls `ConnectDB()`. Run the function and verify that a file named `tripflow.db` is created in the `/tmp` directory. Ensure the function returns a valid GORM DB instance without panics or errors."
+          },
+          {
+            "id": 4,
+            "title": "Integrate and Configure `golang-migrate` Tool",
+            "description": "Add `github.com/golang-migrate/migrate/v4` to the project and set up the basic directory structure for storing migration files.",
+            "dependencies": [],
+            "details": "Execute `go get github.com/golang-migrate/migrate/v4/cmd/migrate`. Create a `migrations` directory at the project root to house SQL migration scripts. Document how to use the `migrate` CLI tool (e.g., `migrate -path ./migrations -database sqlite:///tmp/tripflow.db up`) in a README or development script.",
+            "status": "done",
+            "testStrategy": "Run `go mod tidy` to confirm the `migrate` dependency is correctly added. Create a dummy migration file (e.g., `000001_create_test_table.up.sql`) and attempt to run `migrate up` and `migrate down` from the command line to verify the tool's functionality and path configuration."
+          },
+          {
+            "id": 5,
+            "title": "Create Initial Database Migration Files for Schedules and Files",
+            "description": "Generate the first set of `.up.sql` and `.down.sql` migration files to create the `schedules` and `files` tables based on their Go struct definitions and the provided DDL, using `TEXT` for UUID fields.",
+            "dependencies": [
+              2,
+              4
+            ],
+            "details": "In the `migrations` directory, create `000001_create_files_table.up.sql` with `CREATE TABLE files (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, filename TEXT NOT NULL, filepath TEXT NOT NULL, filesize INTEGER NOT NULL, upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, deleted_at TIMESTAMP);` and `000001_create_files_table.down.sql` with `DROP TABLE IF EXISTS files;`. Then create `000002_create_schedules_table.up.sql` with `CREATE TABLE schedules (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, title TEXT NOT NULL, description TEXT, is_public BOOLEAN NOT NULL DEFAULT FALSE, file_id TEXT NOT NULL REFERENCES files(id) ON DELETE CASCADE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, deleted_at TIMESTAMP);` and `000002_create_schedules_table.down.sql` with `DROP TABLE IF EXISTS schedules;`. Ensure `id` and `file_id` fields are `TEXT` for SQLite UUID storage. Add `ON DELETE CASCADE` for the foreign key constraint on `file_id` in `schedules` table.",
+            "status": "done",
+            "testStrategy": "Run `migrate -path ./migrations -database sqlite:///tmp/tripflow.db up` to apply the migrations. Use an SQLite browser (e.g., DB Browser for SQLite) to connect to `/tmp/tripflow.db` and verify that `schedules` and `files` tables are created with the correct columns, types, and constraints. Then run `migrate -path ./migrations -database sqlite:///tmp/tripflow.db down` and confirm the tables are dropped."
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Implement JWT Authentication Middleware",
+        "description": "Develop and integrate JWT-based authentication for managing schedules (create, edit, delete) and other administrative functions.",
+        "details": "Use `github.com/golang-jwt/jwt/v5@v5.0.0` for JWT token generation and validation. Create a middleware function in Gin to protect specific routes. This middleware should: 1) Extract the JWT from the `Authorization` header. 2) Validate the token's signature and claims. 3) If valid, parse claims (e.g., user ID, role) and store them in `c.Set` for handler access. 4) If invalid or missing, return a 401 Unauthorized response. Implement a login/token generation endpoint for administrators (e.g., via a hardcoded API key or simple credentials for MVP).",
+        "testStrategy": "Create unit tests for the JWT generation and validation logic. Test protected API endpoints with valid and invalid JWTs. Verify that valid tokens grant access and invalid/missing tokens result in 401 errors.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define JWT Claims Structure and Configuration",
+            "description": "Define a custom Go struct for JWT claims, incorporating standard JWT fields and custom fields like UserID and Role. Also, establish a secure method for loading the JWT secret key, ideally from environment variables.",
+            "dependencies": [],
+            "details": "Create a new file, potentially `internal/auth/jwt_claims.go` or `internal/config/jwt.go`. Define a struct `CustomClaims` that embeds `jwt.RegisteredClaims` and adds fields such as `UserID string` and `Role string`. Implement a function (e.g., `LoadJWTSecret() string`) to retrieve the JWT secret key from an environment variable (e.g., `JWT_SECRET_KEY`) to ensure security and flexibility. Include error handling for missing environment variables.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the secret key loading function, ensuring it handles both present and absent environment variables correctly. Verify the `CustomClaims` struct compiles and contains the expected fields."
+          },
+          {
+            "id": 2,
+            "title": "Implement JWT Token Generation Function",
+            "description": "Develop a utility function responsible for creating and signing JWTs based on provided user credentials (UserID and Role).",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a new file, perhaps `internal/auth/jwt_service.go`. Implement a function `GenerateToken(userID, role string) (string, error)` that takes `userID` and `role` as input. This function should: 1) Instantiate `CustomClaims` (from Subtask 1) with the given `userID`, `role`, and set appropriate `jwt.RegisteredClaims` fields like `ExpiresAt` (e.g., 24 hours from now). 2) Use `jwt.NewWithClaims` to create a new token. 3) Sign the token using the secret key loaded in Subtask 1. 4) Return the signed token string or an error.",
+            "status": "done",
+            "testStrategy": "Create unit tests for `GenerateToken`. Test with various user IDs and roles. Verify that the function returns a non-empty token string and no error. Use a mock secret key for testing. Attempt to parse the generated token with the secret key to ensure claims are correctly embedded and the token is valid."
+          },
+          {
+            "id": 3,
+            "title": "Create Administrator Login Endpoint",
+            "description": "Implement a Gin handler for administrator login that authenticates credentials and, upon success, issues a new JWT.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create a new handler file, e.g., `internal/handlers/auth_handler.go`. Implement a Gin handler `AdminLogin(c *gin.Context)`. This handler should: 1) Define a request struct for login credentials (e.g., `Username`, `Password` or `APIKey`). 2) Bind the JSON request body to this struct. 3) For MVP, hardcode administrator credentials (e.g., a specific username/password pair or an API key). 4) Validate the provided credentials. 5) If valid, call `GenerateToken` (from Subtask 2) with appropriate `userID` and `role` (e.g., 'admin'). 6) Return the generated JWT in a JSON response (e.g., `{\"token\": \"<jwt_token>\"}`) with `http.StatusOK`. 7) If invalid, return `http.StatusUnauthorized` with an error message.",
+            "status": "done",
+            "testStrategy": "Use Postman or `curl` to test the login endpoint. Test with valid hardcoded credentials (expect 200 OK and a JWT). Test with invalid credentials (expect 401 Unauthorized). Verify the structure of the returned JSON."
+          },
+          {
+            "id": 4,
+            "title": "Develop JWT Authentication Middleware",
+            "description": "Develop a Gin middleware function that extracts, validates, and parses JWTs from the 'Authorization' header for protected routes.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a new middleware file, e.g., `internal/middleware/jwt_auth.go`. Implement `AuthMiddleware() gin.HandlerFunc`. Inside this middleware: 1) Extract the token from the `Authorization` header (e.g., 'Bearer <token>'). Handle cases where the header is missing or malformed. 2) Parse the token using `jwt.ParseWithClaims` (using `CustomClaims` from Subtask 1 and the secret key from Subtask 1). 3) If the token is valid and parsed successfully, retrieve the `CustomClaims`. 4) Store `claims.UserID` and `claims.Role` in `c.Set(\"userID\", claims.UserID)` and `c.Set(\"userRole\", claims.Role)` for downstream handlers. 5) Call `c.Next()`. 6) If the token is missing, invalid, or expired, abort the request with `c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{\"error\": \"Unauthorized\"})`.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the middleware. Mock a Gin context and request. Test cases: no Authorization header, malformed header, invalid token, expired token, valid token. Verify that valid tokens allow `c.Next()` and set `userID`/`userRole`, while invalid ones abort with 401."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Middleware to Protect Routes and End-to-End Test",
+            "description": "Apply the JWT authentication middleware to relevant administrative routes (e.g., schedule management) and perform end-to-end testing to verify protection.",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "In the main `router.go` or `routes/routes.go` file where API endpoints are defined, apply the `AuthMiddleware` (from Subtask 4) to the Gin route group or individual handlers responsible for schedule management (e.g., `POST /api/schedules`, `PUT /api/schedules/:id`, `DELETE /api/schedules/:id`). Ensure other administrative functions also use this middleware. Perform end-to-end API testing: 1) Attempt to access protected routes without a token (expect 401). 2) Attempt with an invalid/expired token (expect 401). 3) Obtain a valid token using the admin login endpoint (Subtask 3). 4) Access protected routes with the valid token (expect 200 OK or appropriate success response). 5) Within a protected handler, verify that `c.Get(\"userID\")` and `c.Get(\"userRole\")` correctly retrieve the claims stored by the middleware.",
+            "status": "done",
+            "testStrategy": "Conduct integration tests using `curl` or Postman. First, successfully log in as an administrator to obtain a JWT. Then, use this JWT in the Authorization header to call protected endpoints (create, update, delete schedules). Verify successful operations. Subsequently, test protected endpoints with missing, invalid, or expired tokens to ensure they return 401 Unauthorized errors."
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "File Storage Service Abstraction (Local & S3)",
+        "description": "Create an abstract interface for file storage that supports local filesystem storage, specifically designed to utilize the `/tmp` directory in Vercel serverless environments.",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "medium",
+        "details": "Define a Go interface (e.g., `FileStorageService`) with methods like `UploadFile(file io.Reader, filename string, mimeType string) (string, error)` and `GetFile(path string) (io.Reader, error)`. Implement a concrete struct: `LocalFileStorage` using standard Go `os` package functions such as `os.MkdirAll` and `os.WriteFile`. This `LocalFileStorage` should be configured to store files within a specified base directory, which will be `/tmp` when deployed to Vercel serverless functions. The `UploadFile` method should return the unique relative path of the stored file within this base directory. Ensure proper error handling and resource cleanup, especially regarding `io.Reader` and file operations.",
+        "testStrategy": "Write unit tests for the `LocalFileStorage` implementation. Test uploading a dummy file and retrieving it. Verify that files are stored correctly within the designated base directory (e.g., `/tmp` for Vercel context, or a temporary directory during testing). Ensure correct relative file paths are returned by `UploadFile`. Test error conditions such as invalid file names or permissions.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define FileStorageService Interface",
+            "description": "Define the `FileStorageService` Go interface with `UploadFile` and `GetFile` methods as specified in the task description.",
+            "dependencies": [],
+            "details": "Create a new Go file (e.g., `pkg/filestorage/interface.go`) and define the `FileStorageService` interface. It must include:\n`UploadFile(file io.Reader, filename string, mimeType string) (string, error)`\n`GetFile(path string) (io.Reader, error)`\nEnsure appropriate package structure (e.g., `filestorage`).",
+            "status": "done",
+            "testStrategy": null
+          },
+          {
+            "id": 2,
+            "title": "Implement LocalFileStorage Struct and Constructor",
+            "description": "Implement the `LocalFileStorage` struct which will hold the base directory path, and create a constructor function `NewLocalFileStorage`.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a new Go file (e.g., `pkg/filestorage/local.go`) for the `LocalFileStorage` implementation. Define the `LocalFileStorage` struct to include a field like `baseDir string`. Implement `NewLocalFileStorage(basePath string) (FileStorageService, error)` which validates the basePath and returns an instance of `LocalFileStorage` conforming to `FileStorageService`.",
+            "status": "done",
+            "testStrategy": "Write a unit test to ensure `NewLocalFileStorage` correctly initializes the struct and handles invalid base paths."
+          },
+          {
+            "id": 3,
+            "title": "Implement UploadFile Method for LocalFileStorage",
+            "description": "Implement the `UploadFile` method for the `LocalFileStorage` struct, handling file writing, unique naming, and directory creation.",
+            "dependencies": [
+              2
+            ],
+            "details": "Inside `pkg/filestorage/local.go`, implement the `UploadFile` method for `LocalFileStorage`.\n1. Generate a unique filename (e.g., UUID + original extension) to prevent collisions.\n2. Construct the full target path within `baseDir`.\n3. Use `os.MkdirAll` to ensure the target directory exists.\n4. Use `os.WriteFile` or `io.Copy` to write the `io.Reader` content to the file.\n5. Return the unique relative path from the `baseDir`.\n6. Implement robust error handling for file operations.",
+            "status": "done",
+            "testStrategy": "Unit test `UploadFile` by uploading a dummy file. Verify the file exists at the correct location within a temporary base directory. Check if the returned path is relative and correct. Test with different file types and ensure directories are created."
+          },
+          {
+            "id": 4,
+            "title": "Implement GetFile Method for LocalFileStorage",
+            "description": "Implement the `GetFile` method for the `LocalFileStorage` struct to retrieve a file by its relative path.",
+            "dependencies": [
+              2
+            ],
+            "details": "Inside `pkg/filestorage/local.go`, implement the `GetFile` method for `LocalFileStorage`.\n1. Construct the full absolute path using the provided relative `path` and `baseDir`.\n2. Use `os.Open` to open the file.\n3. Return the `*os.File` which implements `io.Reader`.\n4. Ensure proper error handling, especially for `os.ErrNotExist` if the file is not found. Note that the caller is responsible for closing the returned `io.Reader` (e.g., using `defer file.Close()`).",
+            "status": "done",
+            "testStrategy": "Unit test `GetFile` by first uploading a file using `UploadFile`, then attempting to retrieve it. Verify the content of the retrieved file matches the original. Test retrieving a non-existent file and ensure an appropriate error is returned."
+          },
+          {
+            "id": 5,
+            "title": "Integrate LocalFileStorage with Vercel `/tmp` Context & Cleanup",
+            "description": "Ensure `LocalFileStorage` is configured to use `/tmp` in a Vercel environment and add necessary cleanup for testing.",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "Refine the `LocalFileStorage` implementation or its usage to specifically address the `/tmp` directory requirement for Vercel serverless environments. This might involve setting up a configuration or environment variable. Additionally, ensure that during unit testing, a temporary directory is used and cleaned up properly after tests run, to avoid leaving artifacts.",
+            "status": "done",
+            "testStrategy": "Enhance existing unit tests to use `os.MkdirTemp` for a temporary base directory. Implement `t.Cleanup` or similar mechanisms to remove all files and directories created during tests. Verify the service can be initialized with `/tmp` (or an equivalent temporary path for local testing)."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "File Upload API Endpoint",
+        "description": "Implement the `/api/upload` endpoint to handle Markdown file uploads, including validation and storage.",
+        "details": "Create a Gin handler for `POST /api/upload`. This handler should: 1) Parse the multipart form data using `c.Request.ParseMultipartForm` or `c.FormFile`. 2) Perform file type validation (only `.md`, `.markdown`) by checking `Content-Type` header and file extension using `path/filepath`. 3) Enforce file size limit (10MB) by checking `fileHeader.Size`. 4) Use the `FileStorageService` (from Task 4) to store the uploaded file. 5) Generate a unique filename (e.g., UUID-based). 6) Save file metadata into the `files` table (from Task 2), linking to a potential `schedule_id` if provided, or keeping it unlinked initially. Return the unique file ID and path upon success.",
+        "testStrategy": "Use `curl` or Postman to test file uploads with valid Markdown files, invalid file types (e.g., .txt, .exe), and files exceeding the size limit. Verify appropriate error responses for invalid inputs and a success response with file ID/path for valid uploads. Check if files are correctly stored by the `FileStorageService` and `files` table entries are created.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          4
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement POST /api/upload Gin handler and parse file",
+            "description": "Set up the Gin route for `POST /api/upload`. Within the handler, use `c.FormFile(\"file\")` to parse the incoming multipart file data and retrieve the `multipart.FileHeader`. This step ensures the basic endpoint structure is in place and the file can be accessed for further processing.",
+            "dependencies": [],
+            "details": "Define the `POST /api/upload` route, possibly within `router.go` or `main.go`. Implement initial error handling for `c.FormFile` in case no file is provided or the form data is malformed, returning a 400 Bad Request.",
+            "status": "done",
+            "testStrategy": "Use `curl` or Postman to send a `POST` request to `/api/upload` with and without a file attached, verifying the handler is invoked and correctly parses the file header or returns an appropriate error for missing files."
+          },
+          {
+            "id": 2,
+            "title": "Implement Markdown file type and size validation",
+            "description": "Based on the `multipart.FileHeader` obtained in the previous step, implement validation checks. Verify that the file's extension is `.md` or `.markdown` using `path/filepath.Ext` and enforce a maximum file size limit of 10MB using `fileHeader.Size`. Return a 400 Bad Request with a descriptive error message if validation fails.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create helper functions for file extension and size validation. Check `fileHeader.Size` against 10 * 1024 * 1024 bytes. Return `c.JSON(http.StatusBadRequest, gin.H{\"error\": \"Invalid file type or size\"})` for validation failures.",
+            "status": "done",
+            "testStrategy": "Test with various file types (.md, .markdown, .txt, .jpg) and sizes (under 10MB, exactly 10MB, over 10MB). Verify that only .md/.markdown files under 10MB pass validation and others return 400 with specific error messages."
+          },
+          {
+            "id": 3,
+            "title": "Generate unique filename and store file using storage service",
+            "description": "After successful validation, generate a unique filename for the uploaded file, preferably using UUIDs to prevent naming conflicts. Open the uploaded file using `fileHeader.Open()` to get an `io.Reader` and then pass it along with the generated unique filename to the `FileStorageService.UploadFile` method (from Task 4) to persist the file content.",
+            "dependencies": [
+              2,
+              4
+            ],
+            "details": "Import `github.com/google/uuid` for generating UUIDs. Construct a unique filename combining UUID and original file extension. Ensure the `FileStorageService` is correctly instantiated and available (e.g., via dependency injection or Gin context). Handle errors from `fileHeader.Open()` and `storageService.UploadFile`.",
+            "status": "done",
+            "testStrategy": "Mock the `FileStorageService` to confirm its `UploadFile` method is called with the correct file content and a unique filename. Verify error handling if `storageService.UploadFile` returns an error."
+          },
+          {
+            "id": 4,
+            "title": "Persist file metadata to `files` table",
+            "description": "After the file has been successfully stored by the `FileStorageService`, create a new record in the `files` database table (from Task 2). This record should include the unique file ID, the storage path/name returned by the `FileStorageService`, original filename, file size, MIME type, and a `created_at` timestamp. If a `schedule_id` is provided in the request body, link the file to it; otherwise, leave it unlinked.",
+            "dependencies": [
+              3,
+              2
+            ],
+            "details": "Ensure the `files` GORM model and database connection (from Task 2) are accessible. Create a new `File` struct instance, populate its fields (e.g., `ID`, `StoragePath`, `OriginalName`, `Size`, `MimeType`, `CreatedAt`). Use `db.Create(&file)` to save to the database. Check `c.PostForm(\"schedule_id\")` to optionally link the file.",
+            "status": "done",
+            "testStrategy": "Mock the database interaction to ensure the `db.Create` method is called with correct `File` struct data. Verify that `schedule_id` is correctly handled (linked or null). Check for proper error handling if database insertion fails."
+          },
+          {
+            "id": 5,
+            "title": "Construct and return API success response or handle final errors",
+            "description": "Upon successful file storage and metadata persistence, construct a JSON response for the client. This response should include the newly generated unique file ID and the accessible file path/URL (relative path or full URL if applicable). Implement robust final error handling for any previous steps that might have failed, ensuring appropriate HTTP status codes (e.g., 500 Internal Server Error for storage/DB issues) and informative error messages are returned.",
+            "dependencies": [
+              4
+            ],
+            "details": "Use `c.JSON(http.StatusOK, gin.H{\"id\": fileID, \"path\": filePath})` for success. Consolidate error handling for all prior steps into a final catch-all or specific error returns, using `c.JSON` with appropriate `http.StatusInternalServerError` or other status codes.",
+            "status": "done",
+            "testStrategy": "Verify that a successful upload returns a 200 OK with the expected JSON payload (file ID and path). Test edge cases where an error occurs late in the process (e.g., database save fails), ensuring a 500 error is returned. Verify consistency of error response format."
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Markdown Parsing and Content Processing (Backend)",
+        "description": "Develop a service to parse uploaded Markdown files, extract relevant information (title, description), convert to HTML, handle image links, and store processed content.",
+        "details": "Create a Go service for Markdown processing. This service should: 1) Read the raw Markdown content from the stored file (`files.file_path`). 2) Use a Go Markdown parser library (e.g., `github.com/gomarkdown/markdown@v0.0.0-20230522154408-724a7373f890` or `github.com/yuin/goldmark@v1.6.0`) to convert Markdown to HTML. Ensure XSS prevention during conversion (e.g., sanitizing HTML output with `github.com/microcosm-cc/bluemonday@v1.0.26`). 3) Extract `title` (first H1) and `description` (first paragraph) from the Markdown if not provided in the upload request. 4) Crucially, identify image links (`![alt](image.png)`). If these images are not hosted externally, they need to be uploaded to the `FileStorageService` (S3/local), and their URLs in the HTML rewritten to the new hosted location. This might involve base64 decoding if images are embedded or re-uploading if they are local paths. Store the resulting HTML in the `schedules.content` field.",
+        "testStrategy": "Write unit tests for the Markdown parsing logic, ensuring correct HTML conversion, title/description extraction, and proper sanitization. Test with Markdown files containing images, tables, lists, and links. Verify that image links are correctly transformed and uploaded to the storage service. Check the `schedules.content` field for the correct HTML.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          4,
+          5
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Markdown Parsing Libraries and Basic Conversion",
+            "description": "Integrate a Go Markdown parsing library (e.g., goldmark) for Markdown to HTML conversion and a sanitization library (e.g., bluemonday) for XSS prevention. Create a utility function to convert raw Markdown string to a safe HTML string.",
+            "dependencies": [],
+            "details": "Add `github.com/yuin/goldmark@v1.6.0` and `github.com/microcosm-cc/bluemonday@v1.0.26` to the Go project. Implement a `markdownToHTML(md string) (html string, err error)` function within a new `parser` package or service. This function will use `goldmark` to parse the input Markdown and `bluemonday` to sanitize the resulting HTML output, ensuring XSS vulnerabilities are prevented.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the `markdownToHTML` function. Test with simple Markdown, Markdown containing script tags, iframes, and other known XSS vectors to ensure `bluemonday` correctly sanitizes the output and removes malicious content. Verify correct rendering of basic Markdown elements."
+          },
+          {
+            "id": 2,
+            "title": "Implement Title and Description Extraction from Markdown",
+            "description": "Develop logic to programmatically extract the first H1 heading as the title and the first paragraph as the description from the raw Markdown content or its Abstract Syntax Tree (AST).",
+            "dependencies": [
+              1
+            ],
+            "details": "Enhance the Markdown parsing logic to include extraction of metadata. Modify or create a function that takes raw Markdown content. Utilize `goldmark`'s AST capabilities (e.g., `goldmark/text.Reader`, `ast.Walk`) to identify and extract the text from the first H1 element for the 'title' and the first P element for the 'description'. Handle cases gracefully where an H1 or a P element might be missing in the input Markdown, returning empty strings or default values.",
+            "status": "done",
+            "testStrategy": "Create unit tests for the extraction logic. Test with various Markdown inputs: files with a clear H1 and paragraph, files missing an H1, files missing a paragraph, files with multiple H1s (ensuring only the first is taken), and files with no H1 or P. Assert that the correct title and description are extracted or that empty strings are returned when expected."
+          },
+          {
+            "id": 3,
+            "title": "Identify Non-External Image Links for Processing",
+            "description": "Implement a component to traverse the Markdown AST or generated HTML to find all image links (`![alt](image.png)`). Differentiate between external URLs and internal/local image paths requiring further processing.",
+            "dependencies": [
+              1
+            ],
+            "details": "Develop a function, `findInternalImages(markdownContent string) ([]string, error)`, that identifies image URLs. This can be achieved by either analyzing the `goldmark` AST for `ast.Image` nodes or by parsing the HTML output using `golang.org/x/net/html` to find `<img>` tags. For each identified image, extract its `src` attribute. Categorize image URLs as 'external' (starting with `http://`, `https://`) or 'internal' (relative paths, base64 encoded, or local file paths). Return a list of identified internal image paths.",
+            "status": "done",
+            "testStrategy": "Unit test the image identification logic. Test with Markdown content containing: external image URLs, relative image paths, base64-encoded images, and a mix of these. Ensure that only non-external image paths are correctly identified and collected in the returned list, and external links are ignored for internal processing."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Image Upload to File Storage Service and Rewrite HTML",
+            "description": "For identified non-external image links, upload the image content to the `FileStorageService` (from Task 2) and then rewrite the `src` attribute in the generated HTML to the new, hosted URL.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Create a function, `processAndRewriteImages(htmlContent string, internalImagePaths []string) (string, error)`, that interacts with the `FileStorageService` (referencing Task 2's implementation). For each `internalImagePaths`: retrieve the image data (e.g., from `files.file_path` as indicated in the main task, or decode base64 if present). Call the `FileStorageService` to upload this image data, obtaining a new public URL. Use an HTML parser/rewriter (e.g., `goquery` or manual `net/html` traversal) to replace the original `src` attributes of the `<img>` tags in `htmlContent` with the new URLs provided by the storage service. Ensure the file path reading aligns with `files.file_path` structure.",
+            "status": "done",
+            "testStrategy": "Mock the `FileStorageService` to simulate uploads and return specific URLs. Test with Markdown inputs that result in internal image paths (local, base64). Verify that the `FileStorageService`'s upload method is called correctly for each internal image. Assert that the final HTML content has `<img>` `src` attributes rewritten to the mocked, new hosted URLs. Test edge cases like images that fail to upload."
+          },
+          {
+            "id": 5,
+            "title": "Develop Core Markdown Processing Service and Data Persistence",
+            "description": "Consolidate all parsing, extraction, image handling, and HTML rewriting logic into a single backend service function. This service will take a file path to raw Markdown, process it, and persist the extracted title, description, and final HTML content into the `schedules.content` field.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Implement a public service function, e.g., `markdownService.ProcessAndStoreContent(rawMarkdownFilePath string, scheduleID int) (*ProcessedContent, error)`. This function will orchestrate the entire flow: read Markdown from `rawMarkdownFilePath` (from `files.file_path`), call functions from subtasks 1, 2, 3, and 4 in sequence. It will then update the `schedules.content` field (from Task 5 dependency) with the final processed HTML and store the extracted title and description. Ensure error handling at each step. The `ProcessedContent` struct should contain `Title`, `Description`, and `HTMLContent`.",
+            "status": "done",
+            "testStrategy": "Conduct an integration test for the `markdownService.ProcessAndStoreContent` function. Provide a sample Markdown file that includes an H1, a paragraph, external images, and internal (local path/base64) images. Mock the database interaction for `schedules.content` update and the `FileStorageService`. Verify that the service correctly processes the file, uploads internal images, rewrites URLs, extracts title/description, and calls the persistence layer with the accurate final HTML, title, and description."
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Schedule Management API (CRUD)",
+        "description": "Implement the full set of CRUD API endpoints for managing travel schedules.",
+        "details": "Develop Gin handlers for: `POST /api/schedules` (create a schedule, likely triggered after file upload and parsing), `GET /api/schedules/:id` (retrieve a single schedule), `PUT /api/schedules/:id` (update schedule details, e.g., title, description, `is_public`), `DELETE /api/schedules/:id` (delete a schedule and associated file entry), and `GET /api/schedules` (list all schedules, possibly with pagination/filtering). Apply the JWT authentication middleware (from Task 3) to `POST`, `PUT`, `DELETE`, and potentially `GET /api/schedules` (for admin view). Ensure proper error handling and request body validation.",
+        "testStrategy": "Use API testing tools (Postman/curl) to verify all CRUD operations. Test creation with valid data, retrieval by ID, updating various fields, and successful deletion. Ensure unauthorized access to protected endpoints is denied by the JWT middleware. Verify database changes after each operation.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          6
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Schedule Data Model and Repository Interface",
+            "description": "Create the Go struct for 'Schedule' (including fields like ID, UserID, Title, Description, ContentPath, IsPublic, CreatedAt, UpdatedAt) and define a repository interface (e.g., 'ScheduleRepository') with methods for all CRUD operations (Create, GetByID, List, Update, Delete).",
+            "dependencies": [],
+            "details": "The 'Schedule' struct should represent the database schema for schedules, including a unique ID, a foreign key for the UserID, schedule title, description, a path to the stored content file (e.g., Markdown file), a boolean 'IsPublic' flag, and timestamps for creation and last update. The 'ScheduleRepository' interface will define the contract for interacting with the database, abstracting away the underlying ORM or SQL calls. This includes methods like 'CreateSchedule(schedule *Schedule) error', 'GetScheduleByID(id string) (*Schedule, error)', 'ListSchedules(options *ListOptions) ([]*Schedule, error)', 'UpdateSchedule(schedule *Schedule) error', and 'DeleteSchedule(id string) error'.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the 'Schedule' struct's marshaling/unmarshaling (if applicable) and ensure the 'ScheduleRepository' interface methods are well-defined and cover all necessary CRUD operations without implementation details."
+          },
+          {
+            "id": 2,
+            "title": "Implement Create Schedule Endpoint (POST /api/schedules)",
+            "description": "Develop the Gin handler for 'POST /api/schedules'. This endpoint will receive new schedule data, validate the request body, apply JWT authentication middleware, store the schedule details in the database using the defined repository, and return the created schedule.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "The handler function for 'POST /api/schedules' must parse and bind the JSON request body into a DTO (Data Transfer Object) or directly into the Schedule struct. Implement validation rules for required fields (e.g., 'Title', 'Description') and data types. Apply the JWT authentication middleware (from Task 3) to this route. After successful validation and authentication, use the 'ScheduleRepository' (from subtask 1) to persist the new schedule in the database. The 'UserID' for the new schedule should be extracted from the JWT claims. Return a '201 Created' status with the newly created schedule object (including its generated ID and timestamps) or appropriate error responses (e.g., '400 Bad Request', '401 Unauthorized', '500 Internal Server Error').",
+            "status": "done",
+            "testStrategy": "Use Postman/curl to test with valid and invalid request bodies. Verify JWT authentication by testing with missing, invalid, and valid tokens. Confirm a '201 Created' response with the correct schedule data upon success. Check database to ensure the schedule is persisted. Test error handling for validation failures and unauthorized access."
+          },
+          {
+            "id": 3,
+            "title": "Implement Retrieve and List Schedules Endpoints (GET /api/schedules/:id, GET /api/schedules)",
+            "description": "Create Gin handlers for retrieving a single schedule by ID ('GET /api/schedules/:id') and listing all schedules ('GET /api/schedules'). The single schedule retrieval should be public, but the list all endpoint may support filtering and pagination and optionally require authentication for certain views (e.g., admin view).",
+            "dependencies": [
+              1
+            ],
+            "details": "For 'GET /api/schedules/:id': Parse the 'id' parameter from the URL. Use the 'ScheduleRepository' to fetch the schedule. Return a '200 OK' with the schedule data or '404 Not Found' if the schedule does not exist. This endpoint should typically be publicly accessible. For 'GET /api/schedules': Implement query parameter parsing for pagination (e.g., 'page', 'limit') and optional filtering (e.g., 'is_public=true'). Use the 'ScheduleRepository' to retrieve a list of schedules. Return '200 OK' with an array of schedules and potentially pagination metadata. Consider applying JWT authentication to this endpoint if an 'all schedules' view is intended only for authenticated users (e.g., administrators), otherwise, filter for public schedules by default.",
+            "status": "done",
+            "testStrategy": "Test 'GET /api/schedules/:id' with existing and non-existing IDs, verifying correct status codes and data. Test 'GET /api/schedules' with and without pagination/filtering parameters. If authenticated list is implemented, test with valid/invalid JWTs. Verify that only public schedules are returned by default for unauthenticated requests."
+          },
+          {
+            "id": 4,
+            "title": "Implement Update Schedule Endpoint (PUT /api/schedules/:id)",
+            "description": "Develop the Gin handler for 'PUT /api/schedules/:id'. This endpoint will update an existing schedule's details (e.g., title, description, is_public status). It must validate the request body, ensure authorization via JWT, and use the 'ScheduleRepository' for the update.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "The handler for 'PUT /api/schedules/:id' needs to parse the 'id' from the URL and bind the JSON request body (which might contain partial updates for fields like 'Title', 'Description', 'IsPublic'). Implement validation for the incoming data. Apply the JWT authentication middleware (from Task 3). Retrieve the existing schedule using its ID to verify ownership (by comparing the 'UserID' from JWT claims with the schedule's 'UserID'). If the user is authorized, call the 'UpdateSchedule' method of the 'ScheduleRepository' (from subtask 1) to persist the changes. Return '200 OK' with the updated schedule, or '404 Not Found', '400 Bad Request', '401 Unauthorized', '403 Forbidden' as appropriate.",
+            "status": "done",
+            "testStrategy": "Test with valid and invalid update data, including partial updates. Verify JWT authentication and ownership checks. Ensure an unauthorized user cannot update another user's schedule. Check the database to confirm updates are reflected correctly. Verify error responses for invalid IDs, validation failures, and authorization issues."
+          },
+          {
+            "id": 5,
+            "title": "Implement Delete Schedule Endpoint (DELETE /api/schedules/:id) and File Cleanup",
+            "description": "Create the Gin handler for 'DELETE /api/schedules/:id'. This endpoint will remove a schedule from the database and, crucially, delete the associated content file using the file storage service (Task 4). It requires JWT authentication and ownership verification.",
+            "dependencies": [
+              1,
+              3,
+              4
+            ],
+            "details": "The handler for 'DELETE /api/schedules/:id' must parse the 'id' from the URL. Apply the JWT authentication middleware (from Task 3). Before deleting, retrieve the schedule from the database using the 'ScheduleRepository' to verify the authenticated user is the owner of the schedule and to get the 'ContentPath' of the associated file. If ownership is confirmed, call the 'DeleteSchedule' method of the 'ScheduleRepository' to remove the database entry. Subsequently, use the 'FileStorageService' (from Task 4) to delete the actual content file located at the 'ContentPath'. Return '204 No Content' on successful deletion or '404 Not Found', '401 Unauthorized', '403 Forbidden', '500 Internal Server Error' for failures.",
+            "status": "done",
+            "testStrategy": "Test deleting an existing schedule with valid JWT and ownership. Verify that both the database entry and the associated file are removed. Test attempts to delete non-existent schedules. Test with missing, invalid, and unauthorized JWTs. Verify that a user cannot delete another user's schedule. Confirm '204 No Content' for success and appropriate error codes for failures."
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Frontend Project Setup and Core UI",
+        "description": "Initialize the frontend project with HTML5, CSS3 (Tailwind CSS), and Vanilla JavaScript, setting up a basic page structure.",
+        "details": "Create the basic HTML (`index.html`) structure. Set up Tailwind CSS (`go get -u github.com/tailwindlabs/tailwindcss/cmd/tailwindcss@latest` or `npm install -D tailwindcss@3.3.6`) and configure `tailwind.config.js` to compile CSS. Include `Heroicons` for iconography (e.g., via CDN or local SVG imports). Create a main JavaScript file (`app.js`) and link it to `index.html`. Establish a build process for static assets (e.g., using `npm` scripts for Tailwind compilation). Ensure a responsive base layout using Tailwind utility classes.",
+        "testStrategy": "Open `index.html` in a browser. Verify Tailwind CSS is applied correctly (e.g., check default font, colors). Ensure Heroicons are visible. Resize the browser window to confirm basic responsiveness.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Frontend Project Structure and `index.html`",
+            "description": "Create the basic project directory structure, `public/index.html` with HTML5 boilerplate, and placeholder `src/app.js` and `src/input.css` files. Also, initialize `package.json`.",
+            "dependencies": [],
+            "details": "Create a `public` directory containing `index.html`. Create a `src` directory containing `app.js` and `input.css`. Add the basic HTML5 structure to `index.html` and link `app.js` (e.g., `<script src='src/app.js' defer></script>`). Run `npm init -y` to create `package.json`.",
+            "status": "done",
+            "testStrategy": "Verify the existence of `public/index.html`, `src/app.js`, `src/input.css`, and `package.json`. Open `index.html` in a browser and check the developer console for any `app.js` loading errors."
+          },
+          {
+            "id": 2,
+            "title": "Install and Configure Tailwind CSS",
+            "description": "Install Tailwind CSS via npm and configure its `tailwind.config.js` file to scan relevant files for utility classes, and initialize `postcss.config.js`.",
+            "dependencies": [
+              1
+            ],
+            "details": "Run `npm install -D tailwindcss@3.3.6 postcss autoprefixer`. Execute `npx tailwindcss init -p` to generate `tailwind.config.js` and `postcss.config.js`. Modify `tailwind.config.js` to include the `content` array: `content: ['./public/**/*.html', './src/**/*.js']`. Add Tailwind directives (`@tailwind base; @tailwind components; @tailwind utilities;`) to `src/input.css`.",
+            "status": "done",
+            "testStrategy": "Verify `tailwind.config.js`, `postcss.config.js` exist and are correctly configured. Check `src/input.css` for Tailwind directives. No visual test yet as CSS is not compiled."
+          },
+          {
+            "id": 3,
+            "title": "Implement Tailwind CSS Build Scripts",
+            "description": "Add npm scripts to `package.json` for compiling `input.css` into an output CSS file using the Tailwind CLI, and set up a watch mode for development. Link the compiled CSS in `index.html`.",
+            "dependencies": [
+              2
+            ],
+            "details": "Add the following scripts to `package.json`: `'build:tailwind': 'tailwindcss -i ./src/input.css -o ./public/output.css'`, `'watch:tailwind': 'tailwindcss -i ./src/input.css -o ./public/output.css --watch'`. Link the output CSS file in `public/index.html`: `<link href='public/output.css' rel='stylesheet'>`. Run `npm run build:tailwind`.",
+            "status": "done",
+            "testStrategy": "Run `npm run build:tailwind` and verify `public/output.css` is generated and contains Tailwind styles. Open `index.html` in a browser, apply a simple Tailwind class (e.g., `bg-blue-500` to `body`), and confirm the style is applied."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Heroicons for Iconography",
+            "description": "Include Heroicons into the project for accessible iconography, demonstrating integration via CDN or direct SVG embedding.",
+            "dependencies": [
+              3
+            ],
+            "details": "For initial setup, add a Heroicons CDN script to `public/index.html` (e.g., `<script src='https://unpkg.com/@heroicons/html@2.0.18/dist/outline.min.js'></script>`) or embed a sample SVG icon from Heroicons directly into `index.html` to verify display.",
+            "status": "done",
+            "testStrategy": "Add a sample Heroicon to `index.html` (e.g., `<svg class='h-6 w-6 text-blue-500' fill='none' viewBox='0 0 24 24' stroke='currentColor' stroke-width='2'>...</svg>`). Open `index.html` in a browser and visually confirm the icon appears correctly with appropriate styling."
+          },
+          {
+            "id": 5,
+            "title": "Establish Responsive Base Layout and Verification",
+            "description": "Create a simple, responsive page structure (e.g., header, main content, footer) in `index.html` using Tailwind utility classes and verify the entire setup.",
+            "dependencies": [
+              4
+            ],
+            "details": "Add a basic page structure to `public/index.html` including a `<header>`, `<main>`, and `<footer>` section. Apply Tailwind utility classes for a responsive layout, such as `min-h-screen`, `flex`, `flex-col`, `container`, `mx-auto`, `px-4`, `py-8`, and responsive breakpoints (e.g., `md:px-8`).",
+            "status": "done",
+            "testStrategy": "Open `index.html` in a browser. Inspect the layout using browser developer tools, verifying that Tailwind classes are applied and the layout responds correctly to different screen sizes and orientations. Ensure text and elements align as expected. Verify that Heroicons are still visible."
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Frontend File Upload Interface",
+        "description": "Develop the user interface for uploading Markdown files, including drag-and-drop and progress display.",
+        "details": "Implement an HTML `<input type='file'>` element and a designated drop zone area. Use Vanilla JavaScript to handle `dragenter`, `dragleave`, `dragover`, and `drop` events for the drag-and-drop functionality. Display file selection/drop feedback. When a file is selected/dropped, use the `FormData` API and `fetch` to send the file to the `POST /api/upload` endpoint. Implement a progress bar (e.g., by tracking `XMLHttpRequest.upload.onprogress` if using XHR, or simulating if using `fetch` with less granular control) and display success/error messages. Update UI to show uploaded file name.",
+        "testStrategy": "Test file selection via button and drag-and-drop. Upload various valid and invalid files. Verify success messages, error messages, and progress display. Monitor network requests in browser developer tools to ensure files are sent correctly to the backend.",
+        "priority": "high",
+        "dependencies": [
+          8
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup HTML Structure for File Upload Interface",
+            "description": "Add the necessary HTML elements to `index.html` for the file upload interface, including an input type='file' element, a designated drop zone area, and placeholders for displaying file information, upload progress, and status messages.",
+            "dependencies": [
+              8
+            ],
+            "details": "Create a `div` element with a clear ID (e.g., 'drop-zone') for drag-and-drop. Inside this div, or alongside it, add an `<input type='file' id='fileInput' accept='.md,.markdown' class='hidden'>` element. Also, include `div` elements for displaying the selected file's name and size ('file-info'), a progress bar ('progress-bar'), and upload status messages ('status-message'). Apply initial Tailwind CSS classes to style these elements, ensuring the drop zone has visible borders and the file input is initially hidden.",
+            "status": "done",
+            "testStrategy": "Open `index.html` in a browser. Verify that the file upload section is visible and contains the designated drop zone, hidden file input, and placeholder elements for file info, progress, and status. Inspect elements to confirm Tailwind classes are applied."
+          },
+          {
+            "id": 2,
+            "title": "Implement Drag-and-Drop Event Handlers and Visual Feedback",
+            "description": "Write Vanilla JavaScript to handle drag-and-drop events (`dragenter`, `dragleave`, `dragover`, `drop`) on the designated drop zone, providing visual feedback and extracting files.",
+            "dependencies": [
+              1
+            ],
+            "details": "In `app.js`, obtain references to the 'drop-zone' and 'fileInput' elements. Add event listeners for `dragenter`, `dragleave`, `dragover`, and `drop` to the 'drop-zone'. For `dragenter`, `dragleave`, `dragover`, prevent default browser behavior. On `dragenter` and `dragover`, add a specific CSS class (e.g., 'border-blue-500', 'bg-blue-50') to the drop zone for visual highlighting. On `dragleave` and `drop`, remove this class. On `drop`, prevent default, then access `event.dataTransfer.files` to get the list of dropped files.",
+            "status": "done",
+            "testStrategy": "Open `index.html`. Drag a file over the drop zone and verify that its appearance changes (e.g., border color changes). Drag the file away and confirm the appearance reverts. Drop a file and verify that no default browser action (like opening the file) occurs, and that the `dataTransfer.files` object is correctly populated (can use `console.log`)."
+          },
+          {
+            "id": 3,
+            "title": "Handle File Selection and Display File Information with Client-side Validation",
+            "description": "Connect the `<input type='file'>` element to the JavaScript logic and display the name and size of the selected file (whether from input or drag-and-drop) in the UI, implementing basic client-side validation for file type and size.",
+            "dependencies": [
+              2
+            ],
+            "details": "In `app.js`, add an `onchange` event listener to the 'fileInput' to capture files selected via the browse button. Create a reusable function, `processFiles(fileList)`, that accepts a `FileList` object (from either input change or drop event). Inside this function, iterate through `fileList`. For each file, check its `type` (should be 'text/markdown') or `name` extension (`.md`, `.markdown`) and `size` (should be less than 10MB). Display the selected file's name and size in the 'file-info' div. If validation fails, display an error message in 'status-message' and clear any file info.",
+            "status": "done",
+            "testStrategy": "Test by selecting a valid Markdown file using the browse button and by dragging/dropping a valid Markdown file. Verify the file's name and size are correctly displayed. Test with an invalid file type (e.g., `.txt`, `.jpg`) and a file larger than 10MB; verify appropriate error messages are shown and the file info is not displayed."
+          },
+          {
+            "id": 4,
+            "title": "Implement File Upload Logic with `fetch` and Basic Progress",
+            "description": "Develop the JavaScript logic to send the selected Markdown file to the `POST /api/upload` endpoint using `FormData` and `fetch`, incorporating a basic progress indicator during the upload.",
+            "dependencies": [
+              3,
+              5
+            ],
+            "details": "Create an `uploadFile(file)` function. Inside this function, instantiate a `FormData` object and append the `File` object (e.g., `formData.append('file', file)`). Before making the request, update the UI to show an 'Uploading...' message and activate a simple progress indicator (e.g., a spinning loader, or a width-animating div from 0% to 100% on completion). Use the `fetch` API to send a `POST` request to `/api/upload` with the `formData` as the body. Handle the `fetch` promise: parse the JSON response, check for success or error conditions, and pass the result to the UI update function.",
+            "status": "done",
+            "testStrategy": "Select a valid Markdown file. Trigger the upload. Observe the 'Uploading...' message and progress indicator. Monitor network requests in browser developer tools to confirm a `POST` request to `/api/upload` is sent with the file in `FormData`. Verify that upon completion, the success/error handling logic is ready to process the backend response."
+          },
+          {
+            "id": 5,
+            "title": "Display Upload Status, Response, and UI Reset Functionality",
+            "description": "Implement logic to display clear success or error messages after the file upload attempt, including details from the backend response (like the uploaded filename), and provide a mechanism to reset the UI for new uploads.",
+            "dependencies": [
+              4
+            ],
+            "details": "After the `fetch` request in subtask 4 completes, update the 'status-message' div with either a clear success message (e.g., 'File \"example.md\" uploaded successfully! ID: [returned_id]') or a detailed error message obtained from the backend's JSON response. If successful, you may also display the returned filename or ID in the 'file-info' area. Implement a function to reset the UI elements (clear 'file-info', 'progress-bar', 'status-message', and 'fileInput.value') after a successful upload or an error, possibly after a short delay or by adding a 'Clear' button.",
+            "status": "done",
+            "testStrategy": "Perform a successful upload of a Markdown file; verify the success message appears, and any returned file name/ID is displayed. Perform an upload that results in a backend error (e.g., invalid file type if backend validation is active); verify the error message is displayed. Test the UI reset functionality: after an upload, manually or automatically reset the UI and confirm all fields are cleared and ready for a new upload."
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Frontend Markdown Viewer Integration",
+        "description": "Integrate `marked.js` to render Markdown content fetched from the backend into a clean, readable HTML layout.",
+        "details": "Include `marked.js` (`<script src='https://cdn.jsdelivr.net/npm/marked/marked.min.js'></script>`) and `DOMPurify` (`<script src='https://cdn.jsdelivr.net/npm/dompurify@2.4.1/dist/purify.min.js'></script>`) in the frontend. When a schedule is retrieved via `GET /api/schedules/:id`, take the `content` (HTML) from the backend response. Before injecting, sanitize the HTML using `DOMPurify.sanitize(htmlContent)` to prevent XSS. If `schedules.content` contains raw Markdown (which it shouldn't if Task 6 is done, but as a fallback), use `marked.parse(markdownContent)` to convert it. Display the rendered HTML in a dedicated content area, applying Tailwind CSS for clean typography and layout. Implement dark/light mode toggle with CSS variables and JavaScript.",
+        "testStrategy": "Fetch a schedule with complex Markdown (tables, lists, images) and verify it renders correctly and responsively. Test the dark/light mode toggle. Inspect the rendered HTML to ensure `DOMPurify` is sanitizing correctly and no XSS vulnerabilities are introduced.",
+        "priority": "high",
+        "dependencies": [
+          8,
+          7
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate marked.js and DOMPurify CDN Libraries",
+            "description": "Add script tags for marked.js and DOMPurify to the frontend's index.html file to make them globally available for use.",
+            "dependencies": [
+              8
+            ],
+            "details": "Locate 'index.html' (established by Task 8) and insert the following script tags before the closing </body> tag: <script src='https://cdn.jsdelivr.net/npm/marked/marked.min.js'></script> and <script src='https://cdn.jsdelivr.net/npm/dompurify@2.4.1/dist/purify.min.js'></script>. Verify they load correctly in the browser developer console.",
+            "status": "done",
+            "testStrategy": "Open 'index.html' in a browser. Check the developer console for network requests to marked.min.js and purify.min.js, ensuring they load without errors. In the console, type 'marked' and 'DOMPurify' to confirm they are defined global objects."
+          },
+          {
+            "id": 2,
+            "title": "Implement Schedule Content Fetching and Display Container",
+            "description": "Create a dedicated HTML element for displaying schedule content and implement JavaScript to fetch schedule data from the backend API.",
+            "dependencies": [
+              1,
+              7
+            ],
+            "details": "In 'index.html' (or dynamically injected via 'app.js'), create a <div id=\"schedule-content-display\"> element. In 'app.js', write an asynchronous function (e.g., 'fetchAndDisplaySchedule(id)') that uses the 'fetch' API to make a GET request to '/api/schedules/:id' (as provided by Task 7). This function should retrieve the 'content' field from the response and, for now, simply set it as the innerHTML of the '#schedule-content-display' element.",
+            "status": "done",
+            "testStrategy": "Manually call the 'fetchAndDisplaySchedule' function in the browser console with a valid schedule ID. Verify that the raw content (HTML/Markdown) fetched from the backend is displayed within the designated div on the page. Inspect the network tab to ensure the API call is successful."
+          },
+          {
+            "id": 3,
+            "title": "Integrate DOMPurify Sanitization and marked.js Markdown Conversion",
+            "description": "Enhance the content display logic to sanitize incoming HTML content and convert Markdown content to HTML using the loaded libraries.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Modify the 'fetchAndDisplaySchedule' function in 'app.js'. After fetching the 'content': 1. Sanitize the fetched 'content' using 'DOMPurify.sanitize(fetchedContent)' to prevent XSS. 2. Implement a check to determine if the 'content' is Markdown (e.g., by checking for common Markdown patterns or a meta-field if available, or simply assuming if it's not detected as HTML). If it is Markdown, convert it to HTML using 'marked.parse(sanitizedContent)'. 3. Update the innerHTML of '#schedule-content-display' with the final, sanitized, and potentially Markdown-converted HTML.",
+            "status": "done",
+            "testStrategy": "Fetch schedules containing: a) plain HTML with potentially unsafe tags (e.g., <script>alert('XSS')</script>). Verify DOMPurify removes them. b) raw Markdown (e.g., '# Heading\\n**Bold text**'). Verify marked.js correctly renders it to HTML. Inspect the HTML in browser dev tools to confirm sanitization and correct rendering."
+          },
+          {
+            "id": 4,
+            "title": "Apply Tailwind CSS for Rendered Content Typography and Layout",
+            "description": "Style the dynamically rendered HTML content with Tailwind CSS classes to ensure clean typography, spacing, and responsive layout.",
+            "dependencies": [
+              3
+            ],
+            "details": "Add appropriate Tailwind CSS classes directly to the '#schedule-content-display' div or define custom CSS within the Tailwind configuration (e.g., using `@apply` in global CSS or extending theme) to style common Markdown elements like headings (h1-h6), paragraphs, lists (ul, ol), blockquotes, code blocks (pre, code), tables, and images. Focus on readability, line spacing, font sizes, and responsive adjustments for different screen sizes. Ensure links are clearly distinguishable.",
+            "status": "done",
+            "testStrategy": "Fetch a schedule with diverse content (headings, lists, code, tables, images). Inspect the rendered output to ensure Tailwind styles are applied correctly. Check for proper spacing, font sizes, and responsiveness by resizing the browser window. Verify text elements have appropriate contrast and legibility."
+          },
+          {
+            "id": 5,
+            "title": "Implement Dark/Light Mode Toggle for Content Presentation",
+            "description": "Add a UI toggle and JavaScript logic to switch between dark and light themes for the schedule content area using CSS variables or Tailwind's dark mode utilities.",
+            "dependencies": [
+              4
+            ],
+            "details": "Create a toggle button or switch element in 'index.html' (e.g., in a header or sidebar). In 'app.js', implement a click event listener for this toggle. When activated, toggle a class (e.g., 'dark') on the <html> or <body> element. Configure 'tailwind.config.js' to use 'darkMode: 'class'' (if not already done by Task 8). Define Tailwind dark mode utility classes or CSS variables for background, text, and link colors that adapt based on the 'dark' class, ensuring the rendered content (from Task 4) respects the chosen theme.",
+            "status": "done",
+            "testStrategy": "Click the dark/light mode toggle. Verify that the background, text, and link colors within the schedule content area change appropriately. Test in both light and dark modes to ensure readability and consistent styling across different content types (headings, paragraphs, etc.). Check console for errors during theme switching."
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Public Schedule Viewing Page",
+        "description": "Create a dedicated public page for viewing schedules using their unique URLs, incorporating responsive design and print-friendly styles.",
+        "details": "Implement a frontend route/logic to handle `GET /s/:id`. This page will fetch the schedule content using `GET /api/schedules/:id`. The fetched HTML `content` will be displayed using the Markdown Viewer (Task 10). Ensure the page has a clean, minimal design focused on readability. Apply responsive design principles using Tailwind CSS. Add CSS for print-friendly styles using `@media print` queries, hiding navigation and optimizing content for printing.",
+        "testStrategy": "Access `tripflow.com/s/some-uuid` (local equivalent). Verify the schedule loads and displays correctly. Check responsiveness on various screen sizes. Use browser's print preview function to ensure the print styles are applied correctly.",
+        "priority": "high",
+        "dependencies": [
+          7,
+          10
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set Up Public Schedule Viewing Route and Component",
+            "description": "Create the frontend route '/s/:id' and a placeholder component (e.g., PublicSchedulePage) to handle this route. This component will serve as the entry point for viewing public schedules.",
+            "dependencies": [],
+            "details": "Implement the routing configuration in the frontend application to match '/s/:id' and render the new component. The component should initially display a loading indicator or a simple 'Schedule loading...' message. This establishes the basic URL structure.",
+            "status": "done",
+            "testStrategy": "Navigate to `http://localhost:port/s/any-id` (e.g., `http://localhost:3000/s/123`). Verify that the placeholder component loads without errors and displays the initial loading/placeholder message."
+          },
+          {
+            "id": 2,
+            "title": "Implement Schedule Data Fetching and Markdown Display",
+            "description": "Integrate logic within the PublicSchedulePage component to fetch schedule data from `GET /api/schedules/:id` and display its content using the Markdown Viewer (Task 10).",
+            "dependencies": [
+              7,
+              10
+            ],
+            "details": "Use an asynchronous function (e.g., `fetch` or `axios`) to call the backend API `GET /api/schedules/:id` with the `id` from the URL parameter. Handle loading states, display appropriate error messages for failed fetches (e.g., 404 Not Found, network error), and pass the `content` field of the successful response to the Markdown Viewer component (from Task 10) for rendering. Ensure the API call correctly uses the provided `id`.",
+            "status": "done",
+            "testStrategy": "After Task 7 (API) and Task 10 (Markdown Viewer) are complete, access `http://localhost:port/s/valid-schedule-id`. Verify that the schedule content is fetched and rendered correctly by the Markdown Viewer. Test with an invalid ID to ensure error handling and display of a 'Schedule not found' message."
+          },
+          {
+            "id": 3,
+            "title": "Apply Base Page Layout and Readability Styles",
+            "description": "Apply a clean, minimal layout to the PublicSchedulePage component using Tailwind CSS, focusing on readability and content presentation.",
+            "dependencies": [
+              2
+            ],
+            "details": "Structure the page with a main content area, applying Tailwind utility classes for basic typography (font sizes, line height, text color), margins, padding, and container styling to ensure the schedule content is easily readable. Focus on a minimal design that prioritizes content display and clarity.",
+            "status": "done",
+            "testStrategy": "View the page on a desktop browser. Inspect elements to confirm Tailwind CSS classes are applied as expected. Visually verify that the layout appears clean, spacious, and the text is highly readable with appropriate line spacing and font sizes."
+          },
+          {
+            "id": 4,
+            "title": "Implement Responsive Design with Tailwind CSS",
+            "description": "Enhance the PublicSchedulePage component's styling to be fully responsive across various screen sizes using Tailwind CSS's responsive utility classes.",
+            "dependencies": [
+              3
+            ],
+            "details": "Apply Tailwind's `sm:`, `md:`, `lg:`, `xl:` prefixes to adjust layout, font sizes, spacing, and component visibility for different breakpoints. Ensure the page looks good and functions well on mobile phones, tablets, and desktop displays. Adjust content width and alignment for optimal viewing on smaller screens.",
+            "status": "done",
+            "testStrategy": "Resize the browser window or use browser developer tools (device mode) to simulate various screen sizes (mobile, tablet, desktop). Verify that the layout adjusts correctly, content remains readable, and all elements are accessible without horizontal scrolling."
+          },
+          {
+            "id": 5,
+            "title": "Add Print-Friendly Styles for Schedule Page",
+            "description": "Create `@media print` CSS rules to optimize the PublicSchedulePage for printing, hiding unnecessary elements and ensuring content clarity on paper.",
+            "dependencies": [
+              4
+            ],
+            "details": "Define a CSS block using `@media print` within the component's stylesheet or a global print-specific stylesheet. Within this block, hide elements not relevant to print (e.g., navigation, sharing buttons, footers). Adjust margins, colors (e.g., force black text on white background), and potentially font sizes to ensure optimal legibility and layout when printed. Use `display: none;` for elements to hide.",
+            "status": "done",
+            "testStrategy": "Use the browser's 'Print Preview' function (e.g., Ctrl+P / Cmd+P). Verify that unnecessary UI elements are hidden, the schedule content is neatly laid out across pages, and text is clear and readable for printing. Check for proper page breaks."
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Sharing Features Implementation",
+        "description": "Add social media sharing buttons, QR code generation, and embed code provision to the public schedule viewing page.",
+        "details": "On the public schedule viewing page: 1) Implement social media share buttons (Facebook, Twitter, KakaoTalk) using native sharing intents/URLs (e.g., `https://www.facebook.com/sharer/sharer.php?u=URL`). 2) Integrate a QR code generation library (e.g., `qrcode.js` or `easyqrcodejs` for Vanilla JS) to display a QR code linking to the schedule's unique URL. 3) Provide a text area or button to copy an embed code (`<iframe src='YOUR_SCHEDULE_URL_EMBED_VERSION'></iframe>`) using `navigator.clipboard.writeText()` or a polyfill/library like `clipboard.js`. This task should also increment `share_count` in the backend for a schedule when a share button is clicked (via an API call).",
+        "testStrategy": "Test each social media share button to ensure it opens the correct sharing dialog with the schedule URL. Verify the generated QR code scans correctly to the schedule URL. Test the embed code copy functionality and paste it into an external HTML file to ensure it displays the schedule correctly. Check backend `share_count` increment.",
+        "priority": "medium",
+        "dependencies": [
+          11
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Social Media Share Buttons (Frontend)",
+            "description": "Create the user interface for social media sharing buttons (Facebook, Twitter, KakaoTalk) on the public schedule viewing page. Implement the frontend logic to trigger native sharing dialogs or open sharing URLs when these buttons are clicked.",
+            "dependencies": [],
+            "details": "For Facebook, use `https://www.facebook.com/sharer/sharer.php?u=URL`. For Twitter, use `https://twitter.com/intent/tweet?url=URL&text=TEXT`. For KakaoTalk, refer to their official sharing API documentation for web integration or a simple `mailto:` type intent if a full API is not integrated. Ensure the schedule's unique URL is dynamically passed to these sharing intents.",
+            "status": "done",
+            "testStrategy": "Manually click each share button and verify that the correct social media sharing dialog or page opens with the schedule's URL pre-filled. Check console for any errors."
+          },
+          {
+            "id": 2,
+            "title": "Integrate QR Code Generation (Frontend)",
+            "description": "Integrate a JavaScript library for generating QR codes (e.g., `qrcode.js` or `easyqrcodejs`) and display a QR code on the public schedule viewing page. This QR code should encode the schedule's unique URL.",
+            "dependencies": [
+              1
+            ],
+            "details": "Choose a suitable QR code library. Create a dedicated section or modal on the page to render the QR code. Dynamically retrieve the current schedule's public URL and feed it to the QR code generator. The generated QR code should be visible and scannable.",
+            "status": "done",
+            "testStrategy": "Generate a QR code for a test schedule. Use a smartphone's QR code scanner to verify that the generated code correctly redirects to the public schedule viewing page. Check for visual clarity and accessibility of the QR code."
+          },
+          {
+            "id": 3,
+            "title": "Implement Embed Code Provision (Frontend)",
+            "description": "Add a text area to display an embed code for the schedule and a button to copy this code to the user's clipboard on the public schedule viewing page.",
+            "dependencies": [
+              1
+            ],
+            "details": "Display an `<iframe>` embed code in a `<textarea>` or read-only input field. The embed code format should be `<iframe src='YOUR_SCHEDULE_URL_EMBED_VERSION' width='600' height='400' frameborder='0' allowfullscreen></iframe>`. Implement a 'Copy' button that uses `navigator.clipboard.writeText()` to copy the content of the text area. Provide visual feedback upon successful copy.",
+            "status": "done",
+            "testStrategy": "Verify the embed code displayed is correct and includes the schedule's URL. Click the 'Copy' button and then paste into a plain text editor or another HTML file to confirm the code was copied accurately. Ensure the iframe embeds correctly in a separate test HTML file."
+          },
+          {
+            "id": 4,
+            "title": "Develop Backend API for `share_count` and Database Update",
+            "description": "Create a new API endpoint in the Gin backend to increment the `share_count` for a specific schedule ID. This includes ensuring the `schedules` table schema accommodates a `share_count` field.",
+            "dependencies": [],
+            "details": "Define a new `int` or `bigint` column named `share_count` with a default value of 0 in the `schedules` table via a database migration (referencing Task 2 if needed). Implement a Gin `POST` or `PUT` endpoint (e.g., `/api/schedules/:id/share`) that accepts a schedule ID, retrieves the schedule using GORM, increments its `share_count`, and persists the change. Handle cases where the schedule ID is not found. The endpoint should be lightweight and return a success status.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the new API endpoint. Use an HTTP client (e.g., Postman, curl) to call the API multiple times for a specific schedule ID and verify that the `share_count` in the database increments correctly. Test with valid and invalid schedule IDs to ensure proper error responses."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Frontend Sharing with Backend API and End-to-End Testing",
+            "description": "Connect the frontend social media sharing buttons to the newly created backend API to increment the `share_count` upon a successful share action. Conduct comprehensive end-to-end testing of all sharing features.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Modify the event listeners for the social media share buttons (implemented in subtask 1) to make an asynchronous call (e.g., `fetch` or `axios`) to the new `share_count` API endpoint after initiating the native share. Perform thorough end-to-end testing: 1) Verify all share buttons open correctly and also increment the share count. 2) Ensure QR code scanning works. 3) Confirm embed code copies and embeds correctly. 4) Check the `share_count` in the backend database reflects actual shares.",
+            "status": "done",
+            "testStrategy": "Execute the full test plan described in the main task's `testStrategy`. Manually trigger shares, scan QR codes, copy embed codes, and then verify both frontend functionality and the backend `share_count` updates. Use browser developer tools to monitor API calls."
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Admin Dashboard Frontend (List, Edit, Delete)",
+        "description": "Develop a basic administrative frontend to list, edit, and delete schedules, including public/private toggling.",
+        "details": "Create an admin section in the frontend. This section should: 1) Fetch a list of all schedules using `GET /api/schedules` (requires JWT authentication from Task 3). 2) Display schedules in a table format with options to view, edit, or delete. 3) Implement an 'Edit' modal/page that allows updating `title`, `description`, and `is_public` status using `PUT /api/schedules/:id`. 4) Implement a 'Delete' button that calls `DELETE /api/schedules/:id` with confirmation. 5) Implement a toggle for `is_public` status (which maps to `PUT /api/schedules/:id`). All API calls from this dashboard must include the JWT token.",
+        "testStrategy": "Log in to the admin dashboard (simulated or real). Verify schedule listings, pagination (if implemented), and search. Test editing various fields, toggling public status, and deleting schedules. Confirm that backend APIs are called with valid JWTs and database reflects changes.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          7,
+          8
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Admin Dashboard Base Layout and Navigation",
+            "description": "Create the main HTML structure and integrate routing (if applicable) for the admin dashboard. Establish a basic layout using Tailwind CSS for the schedule management section, including a placeholder for listing schedules and navigation elements.",
+            "dependencies": [
+              8
+            ],
+            "details": "Create a new HTML file or section (e.g., 'admin.html' or a dedicated JS module if using client-side routing) for the admin dashboard. Integrate it into the main frontend application structure defined in Task 8. Define basic containers for the schedule list, edit forms, and action buttons using Tailwind CSS classes. Ensure the admin section is accessible, potentially via a new link in the main navigation.",
+            "status": "done",
+            "testStrategy": "Access the new admin dashboard route/page in the browser. Verify that the basic layout and navigation elements are rendered correctly according to Tailwind CSS. Check console for any JavaScript errors related to setup."
+          },
+          {
+            "id": 2,
+            "title": "Implement Schedule Listing with Data Fetching",
+            "description": "Develop the functionality to fetch all schedules from the backend using `GET /api/schedules` and display them in a table format within the admin dashboard. This includes handling JWT authentication for the API request.",
+            "dependencies": [
+              1,
+              3,
+              7
+            ],
+            "details": "Write JavaScript code to make an authenticated GET request to `/api/schedules`. Ensure the JWT token (from Task 3) is included in the request headers. Parse the JSON response and dynamically populate an HTML table with schedule data (e.g., id, title, description, is_public, created_at). Include 'Edit', 'Delete', and 'Toggle Public' placeholder buttons/links for each row.",
+            "status": "done",
+            "testStrategy": "Log in with an administrator account (if applicable) or manually inject a valid JWT. Navigate to the admin dashboard. Verify that schedules are fetched and displayed in a well-formatted table. Inspect network requests to confirm `GET /api/schedules` is made with the correct Authorization header and receives a valid response."
+          },
+          {
+            "id": 3,
+            "title": "Develop Schedule Edit Modal/Page",
+            "description": "Create a user interface, such as a modal or a dedicated page, for editing schedule details. This will allow updating `title`, `description`, and `is_public` status for a selected schedule using `PUT /api/schedules/:id`.",
+            "dependencies": [
+              2,
+              3,
+              7
+            ],
+            "details": "Implement an 'Edit' button handler on the schedule list (from subtask 2). When clicked, fetch the specific schedule's details (`GET /api/schedules/:id` with JWT) and populate a form (modal or separate page) with its current `title`, `description`, and `is_public` status. Implement form submission to send a `PUT` request to `/api/schedules/:id` with the updated data, including the JWT token. Handle success/error responses and refresh the schedule list upon successful update.",
+            "status": "done",
+            "testStrategy": "On the admin dashboard, click 'Edit' for a schedule. Verify the edit form populates with correct data. Modify fields (title, description, toggle public status) and submit. Confirm network request `PUT /api/schedules/:id` sends correct data with JWT. Verify the schedule list updates and changes are reflected in the backend."
+          },
+          {
+            "id": 4,
+            "title": "Implement Schedule Delete and 'is_public' Toggle Actions",
+            "description": "Add functionality for deleting schedules with a confirmation prompt, calling `DELETE /api/schedules/:id`, and a direct toggle mechanism for the `is_public` status using a simplified `PUT /api/schedules/:id` request.",
+            "dependencies": [
+              2,
+              3,
+              7
+            ],
+            "details": "For the 'Delete' button (from subtask 2), implement a confirmation dialog. Upon confirmation, make an authenticated `DELETE` request to `/api/schedules/:id` including the JWT token. For the 'Toggle Public' button/switch, implement an event listener that sends a `PUT` request to `/api/schedules/:id` with only the `is_public` field updated, also including the JWT. Refresh the schedule list after each successful operation.",
+            "status": "done",
+            "testStrategy": "On the admin dashboard, click 'Delete' for a schedule, confirm, and verify it disappears from the list and from the backend. Click the 'Toggle Public' switch for a schedule and observe its status change in the UI and verify a `PUT` request with `is_public` status was sent and reflected in the backend."
+          },
+          {
+            "id": 5,
+            "title": "Enhance UX with Authentication, Loading, and Error Handling",
+            "description": "Refine the admin dashboard's user experience by ensuring all API calls consistently use JWT for authentication, displaying loading indicators during data fetching, and providing clear error messages for failed operations.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "Review all API calls made in subtasks 2, 3, and 4 to ensure consistent JWT inclusion. Implement global or per-component loading states (e.g., spin icon, disabled buttons) for all async operations (fetch, edit, delete, toggle). Add error handling logic to display user-friendly messages for failed API requests (e.g., network errors, server errors, authentication failures). Ensure the schedule list refreshes automatically or provides a clear refresh option after any CUD operation.",
+            "status": "done",
+            "testStrategy": "Test all admin dashboard actions (list, edit, delete, toggle) under various conditions: valid JWT, invalid/expired JWT (if possible to simulate), and network errors (e.g., block network requests in dev tools). Verify loading indicators appear and disappear correctly. Confirm appropriate error messages are displayed for failed operations, and successful operations refresh the UI."
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Security Enhancements (CSRF, Rate Limiting)",
+        "description": "Implement CSRF protection and API rate limiting to enhance the application's security posture.",
+        "details": "1) **CSRF Protection**: Integrate CSRF middleware for Gin (e.g., `github.com/gin-gonic/contrib/csrf@v0.0.0-20230219082348-e87707e78d91`) on all state-changing API endpoints (`POST`, `PUT`, `DELETE`). The middleware will generate and validate CSRF tokens, typically sent in headers or form data. Frontend must fetch and include this token in relevant requests. 2) **Rate Limiting**: Apply API rate limiting using `github.com/ulule/limiter/v3` with Gin middleware (`github.com/ulule/limiter/v3/drivers/middleware/gin@v3.1.0`). Configure limits (e.g., 60 requests per minute per IP) for public and potentially authenticated endpoints. Use `github.com/gin-contrib/requestid@v0.0.6` for logging unique request IDs.",
+        "testStrategy": "Test CSRF protection by attempting to send POST/PUT/DELETE requests without a valid CSRF token; ensure they are rejected. Test rate limiting by sending a burst of requests to a rate-limited endpoint; verify that requests exceeding the limit receive a 429 Too Many Requests response.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Request ID Middleware",
+            "description": "Integrate github.com/gin-contrib/requestid to generate and log unique request IDs for all incoming API requests.",
+            "dependencies": [
+              1
+            ],
+            "details": "Install the `github.com/gin-contrib/requestid` package. Add `requestid.New()` middleware to the Gin router's global middleware chain, preferably early. Ensure request IDs are stored in the Gin context (c.Set) so they can be retrieved and used for consistent logging across the application, especially for rate limiting and CSRF logs.",
+            "status": "done",
+            "testStrategy": "Upon completion of rate limiting, verify that all rate limiting logs contain the unique Request ID generated by this middleware."
+          },
+          {
+            "id": 2,
+            "title": "Integrate and Configure API Rate Limiting Middleware",
+            "description": "Implement API rate limiting using github.com/ulule/limiter/v3 and its Gin middleware, applying a default limit for public endpoints.",
+            "dependencies": [
+              1
+            ],
+            "details": "Install `github.com/ulule/limiter/v3` and `github.com/ulule/limiter/v3/drivers/middleware/gin`. Define a default rate limit (e.g., 60 requests per minute per IP address) using an in-memory store for initial setup. Create a `limiter.New` instance and integrate it as a Gin middleware. Apply this middleware to a general group of routes or globally. Ensure that the rate limiter can utilize the Request ID from the context for logging purposes.",
+            "status": "done",
+            "testStrategy": "Send more than 60 requests within one minute to a public API endpoint (e.g., a health check or a public GET endpoint). Verify that requests exceeding the limit receive a 429 Too Many Requests HTTP status code."
+          },
+          {
+            "id": 3,
+            "title": "Implement CSRF Protection Middleware",
+            "description": "Integrate github.com/gin-gonic/contrib/csrf middleware to protect state-changing API endpoints.",
+            "dependencies": [
+              1
+            ],
+            "details": "Install `github.com/gin-gonic/contrib/csrf`. Configure the CSRF middleware with a secure secret key, appropriate cookie options (e.g., `HttpOnly`, `Secure`, `SameSite`), and token header name (e.g., `X-CSRF-Token`). This middleware should be instantiated once and ready to be applied to specific routes. The middleware will be responsible for generating and validating tokens.",
+            "status": "done",
+            "testStrategy": "After applying to an endpoint, attempt to make a POST request to that endpoint without any CSRF token. Verify that the request is rejected with a 403 Forbidden status."
+          },
+          {
+            "id": 4,
+            "title": "Apply CSRF to State-Changing Endpoints and Document Frontend Integration",
+            "description": "Apply the configured CSRF middleware to all relevant POST, PUT, and DELETE API endpoints and document how the frontend should fetch and include the CSRF token.",
+            "dependencies": [
+              3
+            ],
+            "details": "Identify all existing and future state-changing Gin API endpoints (e.g., /api/upload, /api/schedules POST/PUT/DELETE mentioned in Tasks 5 and 7). Apply the `csrf.Middleware` to these specific routes or route groups. Create internal documentation explaining how the frontend should first fetch the CSRF token (e.g., from a cookie set by the backend, or a specific GET endpoint) and then include it in subsequent state-changing requests (typically in an `X-CSRF-Token` header).",
+            "status": "done",
+            "testStrategy": "For each protected endpoint, first perform a GET request to obtain the CSRF token. Then, include this token in a subsequent POST/PUT/DELETE request and verify it passes. Next, attempt the same state-changing request without the token or with an invalid token to confirm rejection."
+          },
+          {
+            "id": 5,
+            "title": "Configure and Apply Specific Rate Limits and Enhanced Logging",
+            "description": "Configure specific rate limits for different endpoint categories (e.g., authenticated vs. public) and enhance logging to include rate limiting events and Request IDs.",
+            "dependencies": [
+              2
+            ],
+            "details": "Review the application's API endpoints and classify them (e.g., unauthenticated, authenticated, login attempts). Define different `limiter.Rate` configurations for each category. Create separate `limiter.New` instances for each rate limit profile. Apply these specific limiter middlewares to the respective Gin route groups (e.g., `authenticatedRoutes.Use(authenticatedLimiter)`). Integrate rate limiting event logging with the application's structured logger, ensuring that the Request ID (from subtask 1) is consistently included in these logs to aid debugging and analysis.",
+            "status": "done",
+            "testStrategy": "Test different rate-limited endpoint categories by exceeding their specific limits (e.g., authenticated endpoints might have a higher limit). Verify correct 429 responses and check server logs to confirm that rate-limiting events are recorded, including the associated Request IDs, for each instance."
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "CI/CD Pipeline and Deployment Automation",
+        "description": "Transition CI/CD from GitHub Actions to Vercel's automatic deployment for both the Go backend (as serverless functions) and the Next.js frontend. Focus on configuring `vercel.json` and managing environment variables within Vercel.",
+        "status": "done",
+        "dependencies": [
+          1,
+          8
+        ],
+        "priority": "medium",
+        "details": "The project will leverage Vercel's native Git integration for continuous deployment. Instead of GitHub Actions, Vercel will automatically build and deploy changes pushed to the connected Git repository (e.g., `main` branch).\n\n1.  **Vercel Configuration File (`vercel.json`)**: Create a `vercel.json` file at the project root (`/Users/sanguklee/Desktop/git/2025/Personal/TripFlow/vercel.json`) to define the monorepo structure and routing. This file will instruct Vercel on how to handle the `backend/` (Go serverless functions) and `frontend/` (Next.js application) directories.\n    *   **Monorepo Detection**: Vercel will automatically detect the Next.js application in `frontend/` and Go serverless functions (if placed within `api/` or explicitly configured) in `backend/`. However, `vercel.json` is crucial for proper routing and build commands.\n    *   **Example `vercel.json` Structure**: The `vercel.json` should include `rewrites` to route requests:\n        ```json\n        {\n          \"rewrites\": [\n            {\n              \"source\": \"/api/(.*)\",\n              \"destination\": \"/backend/main.go\" // Assumes main.go is the entry point for backend serverless functions\n            },\n            {\n              \"source\": \"/(.*)\",\n              \"destination\": \"/frontend/$1\"\n            }\n          ],\n          \"functions\": {\n             \"backend/main.go\": { // Explicitly define the Go serverless function\n                \"runtime\": \"go1.x\",\n                \"memory\": 1024, // Example: Allocate 1GB memory\n                \"maxDuration\": 10 // Example: Max 10 seconds execution\n             }\n          },\n          \"installCommand\": \"npm install --prefix frontend && go mod tidy --chdir backend\",\n          \"buildCommand\": \"npm run build --prefix frontend\"\n        }\n        ```\n2.  **Go Backend (Serverless Functions)**: Vercel deploys Go applications as serverless functions. The `backend/` directory should contain the Go module (`go.mod`) and the entry point (e.g., `main.go`). Vercel will automatically handle `go mod download` and `go build` during deployment.\n3.  **Next.js Frontend**: Vercel will automatically detect the Next.js project in the `frontend/` directory, install Node.js dependencies (`npm install`), and execute the build command (`next build` as defined by `npm run build` in `frontend/package.json`).\n4.  **Environment Variables**: Securely manage all environment variables (e.g., database connection strings, API keys) directly within the Vercel project settings dashboard. Vercel automatically injects these into the build process and runtime environment for both frontend and backend components.",
+        "testStrategy": "1.  Push changes to a feature branch and then merge them into the `main` branch of the GitHub repository.\n2.  Verify that Vercel automatically detects the push and triggers a new deployment for the connected project.\n3.  Monitor the Vercel deployment logs (via the Vercel dashboard) to ensure that the build steps (for both frontend and backend) complete successfully without errors.\n4.  After the deployment is marked as successful, access the deployed application URL provided by Vercel.\n5.  Verify the frontend renders correctly, and all dynamic content fetched from the Go backend (via `/api/*` endpoints) is functioning as expected.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Connect Git Repository to Vercel and Initial Project Setup",
+            "description": "Link the project's Git repository (e.g., GitHub) to a new Vercel project to enable automatic deployments.",
+            "dependencies": [],
+            "details": "Log into Vercel, create a new project, select the 'TripFlow' repository from the connected Git provider, and configure the project settings to automatically deploy from the `main` branch. This establishes the basic CI/CD trigger for future pushes.",
+            "status": "done",
+            "testStrategy": "After connecting, push a small, non-breaking change to the `main` branch and verify that Vercel successfully detects the push and triggers a new deployment attempt (even if the build subsequently fails due to incomplete configuration)."
+          },
+          {
+            "id": 2,
+            "title": "Create and Configure `vercel.json` for Monorepo Structure and Global Builds",
+            "description": "Create the `vercel.json` file at the project root to define the monorepo structure, specify global installation and build commands for both frontend and backend, and set up default routing.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create `vercel.json` at `/Users/sanguklee/Desktop/git/2025/Personal/TripFlow/vercel.json`. Configure the `installCommand` to `npm install --prefix frontend && go mod tidy --chdir backend` and the `buildCommand` to `npm run build --prefix frontend`. Add an initial `rewrite` rule to direct all requests not matching `/api` to the frontend, e.g., `{\"source\": \"/(.*)\", \"destination\": \"/frontend/$1\"}`.",
+            "status": "done",
+            "testStrategy": "Commit and push the initial `vercel.json` to a feature branch, then deploy to Vercel. Observe the deployment logs in the Vercel dashboard to ensure `installCommand` and `buildCommand` execute successfully and the Next.js frontend builds without errors."
+          },
+          {
+            "id": 3,
+            "title": "Define Vercel Function for Go Backend and API Rewrites in `vercel.json`",
+            "description": "Add specific configurations to `vercel.json` to define the Go backend as a serverless function entry point and route all `/api` requests to it.",
+            "dependencies": [
+              2
+            ],
+            "details": "Update the existing `vercel.json` to include the `functions` configuration for `backend/main.go`. Specify `runtime: 'go1.x'`, `memory: 1024`, and `maxDuration: 10`. Add a `rewrite` rule to direct `\"/api/(.*)\"` requests to `\"/backend/main.go\"`. This sets up Vercel to correctly identify and attempt to build the Go function.",
+            "status": "done",
+            "testStrategy": "Deploy the updated `vercel.json`. Monitor the Vercel deployment logs to ensure the Go function `backend/main.go` is detected and built successfully by Vercel's Go runtime. Verify that no build errors related to the Go function configuration are present."
+          },
+          {
+            "id": 4,
+            "title": "Confirm Next.js Frontend Automatic Detection and Build Process",
+            "description": "Ensure that Vercel correctly detects the Next.js application within the `frontend/` directory and successfully executes its build process, resulting in a deployable frontend.",
+            "dependencies": [
+              2
+            ],
+            "details": "Verify that the `frontend/package.json` contains a `build` script that properly executes `next build`. Confirm that the `vercel.json`'s `installCommand` and `buildCommand` at the root correctly target the frontend subdirectory. After a deployment, access the deployed Vercel URL and confirm the Next.js frontend is accessible and functional, indicating a successful build.",
+            "status": "done",
+            "testStrategy": "Access the deployed Vercel URL in a web browser. Verify the Next.js frontend loads correctly, including all assets and routes. Use browser developer tools to inspect the network tab and console for any frontend-related errors, ensuring proper functionality."
+          },
+          {
+            "id": 5,
+            "title": "Securely Configure Environment Variables in Vercel Dashboard",
+            "description": "Add all necessary environment variables for both the frontend and backend components directly into the Vercel project settings for secure management and injection during deployment and runtime.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "Identify all required environment variables (e.g., database connection strings, API keys, JWT secrets from Task 3, any specific `NEXT_PUBLIC_` variables for the frontend) needed by both `backend/` and `frontend/`. Navigate to the Vercel project settings -> Environment Variables section in the Vercel dashboard and add these variables, ensuring they are configured for the correct environments (e.g., 'Production', 'Preview', 'Development').",
+            "status": "done",
+            "testStrategy": "After configuring variables, trigger a new deployment. For the backend, implement a temporary debug endpoint (e.g., `/api/debug/env`) to return a non-sensitive configured environment variable. For the frontend, check if any client-side environment variables are correctly loaded (e.g., `process.env.NEXT_PUBLIC_API_URL`). Verify that the deployed application functions correctly with the expected environment variable values without exposing sensitive information."
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Configure Vercel Serverless Functions for Go Backend",
+        "description": "Convert the existing Go backend application into a collection of Vercel serverless functions, including the necessary vercel.json configurations, adaptation of Go module structure for Vercel, implementation of serverless-compatible handlers, and secure environment variable management.",
+        "details": "1.  **`vercel.json` Configuration**: Modify or create `vercel.json` at the project root to define build steps and function configurations. Specify the Go runtime for backend functions (e.g., `\"runtime\": \"go1.x\"`) and configure `functions` to map API paths to a main Go handler file. Define `routes` to direct all `/api/*` traffic to this serverless entry point.\n2.  **Go Module Restructuring**: Create an `api/` directory at the project root. Within this directory, create a central entry point file (e.g., `api/index.go`) that will serve all API requests. This file will be responsible for initializing the Gin router.\n3.  **Implement Serverless Handler**: In `api/index.go`, implement a `Handler(w http.ResponseWriter, r *http.Request)` function. This function will serve as the entry point for Vercel. Inside the `init()` block of `api/index.go`, initialize the Gin router once to optimize cold starts. The `Handler` function will then invoke `router.ServeHTTP(w, r)` to process the incoming request using the existing Gin routes and middleware. Ensure proper error handling and logging are integrated within this serverless context.\n4.  **Environment Variable Management**: Identify all environment variables required by the Go backend (e.g., database connection strings, API keys). Configure these variables within the Vercel project settings (Environment Variables section) for production, preview, and development environments. Ensure the Go application correctly reads these variables using `os.Getenv()`.",
+        "testStrategy": "1.  **Local Development Verification**: Run the Vercel project locally using `vercel dev`. Verify that all Go backend API endpoints (e.g., `/api/health` and existing feature API routes) are accessible and function as expected through the local Vercel development server.\n2.  **Deployment Trigger and Build Logs**: Push changes to a Vercel-connected Git branch (e.g., `main`). Monitor the Vercel dashboard to ensure the Go serverless functions build successfully without errors.\n3.  **Deployed Endpoint Accessibility**: After successful deployment, access deployed API endpoints (e.g., `your-project.vercel.app/api/health`, `your-project.vercel.app/api/schedules`) and verify they respond correctly and with the expected data.\n4.  **Environment Variable Validation**: Temporarily add a debug endpoint or review deployment logs to confirm that all necessary environment variables are correctly loaded and accessible within the deployed serverless functions.\n5.  **Performance Observation**: Observe initial cold start times and subsequent request latency to ensure the serverless setup provides acceptable performance.",
+        "status": "done",
+        "dependencies": [
+          1,
+          15
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Vercel `api/` directory and `api/index.go` entry point",
+            "description": "Establish the necessary directory structure for Vercel serverless functions by creating an `api/` directory at the project root and an `api/index.go` file within it, which will serve as the central entry point for all Go backend API requests.",
+            "dependencies": [],
+            "details": "At the project root, create a new directory named `api/`. Inside this `api/` directory, create an empty Go file named `index.go`. This file will eventually contain the serverless handler and Gin router initialization. The resulting path should be `/TripFlow/api/index.go`.",
+            "status": "done",
+            "testStrategy": "Verify that the `api/` directory and `api/index.go` file have been successfully created in the correct location within the project structure."
+          },
+          {
+            "id": 2,
+            "title": "Implement Vercel `Handler` function and basic Gin router setup in `api/index.go`",
+            "description": "In `api/index.go`, implement the `Handler(w http.ResponseWriter, r *http.Request)` function, which is the standard entry point for Vercel Go serverless functions. Initialize the Gin router globally within an `init()` block in `api/index.go` to optimize cold starts and include a basic health check route.",
+            "dependencies": [
+              1
+            ],
+            "details": "Define a global variable `var router *gin.Engine` in `api/index.go`. Implement the `init()` function to initialize `router = gin.New()` or `router = gin.Default()` and add a basic health check route like `router.GET(\"/api/health\", func(c *gin.Context) { c.JSON(200, gin.H{\"status\": \"ok\"}) })`. Then, implement the `Handler(w http.ResponseWriter, r *http.Request)` function which will call `router.ServeHTTP(w, r)` to process incoming requests.",
+            "status": "done",
+            "testStrategy": "Run `vercel dev` locally in the project root. Access `http://localhost:3000/api/health` and verify that it returns a JSON response with `{\"status\": \"ok\"}`."
+          },
+          {
+            "id": 3,
+            "title": "Configure `vercel.json` for Go serverless function deployment",
+            "description": "Create or modify the `vercel.json` file at the project root to define the build configuration for the Go serverless function. This includes specifying the Go runtime, mapping API routes, and setting up the build command for Vercel's deployment process.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create a `vercel.json` file if it doesn't exist. Add `builds` and `routes` configurations. The `builds` section should specify `{\"src\": \"api/index.go\", \"use\": \"@vercel/go@2.0.0\", \"config\": {\"maxLambdaSize\": \"15mb\", \"runtime\": \"go1.x\"}}`. The `routes` section should include `{\"src\": \"/api/(.*)\", \"dest\": \"/api/index.go\"}` to direct all `/api/*` traffic to the Go serverless entry point. Adjust `maxLambdaSize` if the compiled binary exceeds 15MB.",
+            "status": "done",
+            "testStrategy": "Deploy the application to Vercel (e.g., using `vercel --prod` or a preview deployment). After deployment, access the deployed `/api/health` endpoint via the Vercel URL and verify it returns the expected `{\"status\": \"ok\"}` response."
+          },
+          {
+            "id": 4,
+            "title": "Integrate full Gin application logic and dependencies into `api/index.go`'s `init()`",
+            "description": "Refactor the existing Gin application's route definitions, middleware setup, database connection, and other service initializations to occur entirely within the `init()` function of `api/index.go`. Ensure the application's current structure is compatible with a single, globally initialized router and correctly handles the SQLite database path in `/tmp` as specified in Task 2.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Move all existing Gin route registrations, middleware applications (e.g., from `main.go` or a `setupRouter()` function), and service initializations (e.g., database connection using GORM for SQLite to `/tmp/tripflow.db` as per Task 2, file storage service) into the `init()` function of `api/index.go`. Ensure that `init()` performs all setup only once. Verify that `router` is correctly populated with all application routes and middleware before `Handler` is called.",
+            "status": "done",
+            "testStrategy": "Run `vercel dev` locally and thoroughly test all critical existing API endpoints (e.g., from Task 5 for file upload, and other feature-specific routes). Verify they function correctly, interact with the database (confirming `/tmp/tripflow.db` usage), and return appropriate responses without errors."
+          },
+          {
+            "id": 5,
+            "title": "Identify and configure environment variables in Vercel project settings",
+            "description": "Identify all environment variables required by the Go backend application (e.g., database connection strings, API keys) and securely configure them within the Vercel project settings for development, preview, and production environments. Verify that the Go application correctly reads these variables using `os.Getenv()` during runtime.",
+            "dependencies": [
+              4
+            ],
+            "details": "Review the existing Go codebase to identify all instances where `os.Getenv()` is used to retrieve configuration values. Compile a comprehensive list of these required environment variables. Navigate to the Vercel project dashboard, access the 'Settings' tab, and then the 'Environment Variables' section. Add each identified variable for the 'Development', 'Preview', and 'Production' environments, ensuring correct values (e.g., `DATABASE_URL=/tmp/tripflow.db` for the database path). For local development with `vercel dev`, ensure a `.env.local` file is populated with corresponding variables.",
+            "status": "done",
+            "testStrategy": "Deploy the application to Vercel (e.g., a preview deployment). Trigger an action that relies on an environment variable (e.g., a database operation or an external API call using a key). Monitor Vercel logs for any errors related to missing or incorrect environment variables. Confirm that all functionalities dependent on environment variables work as expected."
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "Integrate shadcn/ui for Modern UI Upgrade",
+        "description": "Refactor the TripFlow project's frontend UI to utilize shadcn/ui components, enhancing aesthetics and user experience with a modern, consistent design system.",
+        "details": "This task involves a comprehensive UI overhaul for the TripFlow project using shadcn/ui. The implementation will include:\n\n1.  **Installation and Configuration**: Initialize shadcn/ui within the Next.js project. This involves using the shadcn/ui CLI to install required dependencies (e.g., Radix UI, Tailwind CSS) and configuring `tailwind.config.js` and `components.json`.\n2.  **Theme Definition**: Establish a consistent color palette, typography, and spacing by customizing the Tailwind CSS theme variables, aligning with a modern design aesthetic that suits the TripFlow project.\n3.  **Component Replacement**: Systematically replace existing custom or basic HTML UI elements with their equivalent shadcn/ui components across all frontend pages. Prioritize core pages such as schedule listing, detail views, user profile, authentication forms (login/register), sharing features, and the admin dashboard.\n4.  **Responsive Design**: Ensure all integrated shadcn/ui components and layouts are fully responsive and adapt gracefully to various screen sizes and devices (desktop, tablet, mobile).\n5.  **Accessibility (A11y)**: Leverage shadcn/ui's inherent accessibility features (built on Radix UI primitives) to ensure the UI is usable for all users, including those with disabilities. Conduct basic accessibility checks to confirm compliance.\n6.  **Code Cleanup**: Remove deprecated styling and UI code, streamline CSS, and ensure consistency across the codebase following the shadcn/ui conventions.",
+        "testStrategy": "1.  **Visual Inspection**: Conduct a thorough visual review of all major application pages (e.g., Home, Schedule List, Schedule Detail, User Profile, Login, Register, Admin Dashboard, Sharing popups/elements) to confirm the new shadcn/ui styling is applied correctly, consistently, and without visual regressions.\n2.  **Component Functionality**: Interact with all key UI components (buttons, forms, modals, dropdowns, tables, navigation) to ensure they function as expected after the integration, verifying interactions and data display.\n3.  **Responsiveness Testing**: Verify the UI on different screen sizes and orientations using browser developer tools and/or actual devices (desktop, tablet, mobile) to ensure proper responsiveness and layout adaptation across breakpoints.\n4.  **Cross-Browser Compatibility**: Test the updated UI in major browsers (Chrome, Firefox, Safari, Edge) to identify and resolve any rendering inconsistencies or functional issues.\n5.  **User Flow Testing**: Perform end-to-end user flows (e.g., login, create schedule, view schedule, edit profile, share schedule, navigate admin dashboard) to ensure a smooth and intuitive user experience with the new design.\n6.  **Performance Check**: Monitor page load times and UI rendering performance using browser developer tools to ensure the new components do not negatively impact the application's speed or responsiveness.",
+        "status": "done",
+        "dependencies": [
+          1,
+          12,
+          13
+        ],
+        "priority": "high",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-10-14T07:41:28.334Z",
+      "updated": "2025-10-15T01:46:11.771Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

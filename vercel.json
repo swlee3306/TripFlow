@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.go",
+      "use": "@vercel/go@2.0.0",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "go1.x"
+      }
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend/public"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.go"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ],
+  "functions": {
+    "api/index.go": {
+      "runtime": "go1.x",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "installCommand": "cd frontend && npm install",
+  "buildCommand": "cd frontend && npm run vercel-build",
+  "outputDirectory": "frontend/public",
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

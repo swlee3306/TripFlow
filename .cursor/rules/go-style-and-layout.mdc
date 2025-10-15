@@ -1,0 +1,30 @@
+---
+description: Go 코드 스타일·레이아웃·패키지 구조 규칙(모듈/레이어/DI/로깅 기본)
+globs:
+  - "**/*.go"
+  - "go.mod"
+  - "go.sum"
+---
+
+# GO STYLE & LAYOUT
+
+**목표**
+- 읽기 쉬운 레이어드 구조(transport → service → repo)와 일관된 로거/에러 핸들링.
+- 작은 파일/짧은 함수, 명시적 의존성 주입.
+
+**프로젝트 구조 가이드**
+- `cmd/<app>/main.go` 에서 wire-up: config 로드 → logger → deps 주입 → server.Start()
+- 내부 패키지: `internal/transport`, `internal/service`, `internal/repo`, `internal/domain`, `pkg/`는 범용 유틸
+- 인터페이스는 소비자 패키지에 선언(“interface belongs to the consumer”)
+- 프로젝트 구조는 참고용이며 **정답이 아니다**. 과설계/불필요한 디렉터리 남발 금지.
+
+**코딩 규칙**
+- Exported type/function 에는 한국어+영어 주석(요약 1줄 + 상세 2~4줄)
+- 에러는 wrapping: `fmt.Errorf("doing X: %w", err)`
+- 컨텍스트는 첫 인자로 `ctx context.Context` (I/O, 네트워크, DB, RPC 모두)
+- 로그 키는 snake_case, 구조적 로그 사용 (logger.With("component","service", "rule_id", id))
+- 제네릭은 과사용 금지, 단순한 곳에만
+
+**툴**
+- go fmt / go vet / staticcheck / golangci-lint (최소 linters: errcheck, gocyclo, gosec, revive)
+- 모듈 tidy: `go mod tidy` 자동 제안

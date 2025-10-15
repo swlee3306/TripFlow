@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripFlow - 스케줄 보기</title>
+    <meta name="description" content="여행 스케줄을 확인하세요">
+    
+    <!-- Tailwind CSS -->
+    <link href="./css/output.css" rel="stylesheet">
+    
+    <!-- Markdown processing libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.1/dist/purify.min.js"></script>
+    
+    <!-- QR Code generation library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <!-- Print styles -->
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .print-content {
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .prose {
+                color: black !important;
+            }
+            
+            .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+                color: black !important;
+            }
+            
+            .prose a {
+                color: black !important;
+                text-decoration: underline !important;
+            }
+            
+            .prose blockquote {
+                border-left: 4px solid black !important;
+                color: black !important;
+            }
+            
+            .prose code {
+                background: #f5f5f5 !important;
+                color: black !important;
+            }
+            
+            .prose pre {
+                background: #f5f5f5 !important;
+                color: black !important;
+                border: 1px solid #ddd !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading State -->
+    <div id="loading-state" class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">스케줄을 불러오는 중...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden min-h-screen flex items-center justify-center">
+        <div class="text-center max-w-md mx-auto px-4">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <h2 class="font-bold text-lg mb-2">스케줄을 찾을 수 없습니다</h2>
+                <p class="text-sm">요청하신 스케줄이 존재하지 않거나 비공개 설정되어 있습니다.</p>
+            </div>
+            <button onclick="window.location.href='/' + window.location.search" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                홈으로 돌아가기
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="hidden">
+        <!-- Header -->
+        <header class="no-print bg-white shadow-sm border-b">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <a href="/" class="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800">
+                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            <span class="text-xl font-bold">TripFlow</span>
+                        </a>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Dark/Light Mode Toggle -->
+                        <button id="theme-toggle" class="no-print p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                            <svg id="theme-icon" class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </button>
+                        <!-- Print Button -->
+                        <button id="print-button" class="no-print bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors">
+                            <svg class="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            인쇄
+                        </button>
+                        <!-- Share Button -->
+                        <button id="share-button" class="no-print bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                            <svg class="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                            </svg>
+                            공유
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Schedule Content -->
+        <main class="print-content">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Schedule Header -->
+                <div class="mb-8">
+                    <h1 id="schedule-title" class="text-4xl font-bold text-gray-900 mb-4">스케줄 제목</h1>
+                    <div id="schedule-meta" class="flex flex-wrap items-center text-sm text-gray-600 space-x-4">
+                        <span id="schedule-date" class="flex items-center">
+                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span id="created-date">생성일</span>
+                        </span>
+                        <span id="schedule-views" class="flex items-center">
+                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span id="view-count">조회수</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Schedule Description -->
+                <div id="schedule-description" class="mb-8 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                    <p id="description-text" class="text-gray-700">스케줄 설명이 여기에 표시됩니다.</p>
+                </div>
+
+                <!-- Schedule Content Display -->
+                <div id="schedule-content-display" class="prose prose-lg max-w-none dark:prose-invert">
+                    <!-- Content will be dynamically loaded here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="no-print bg-white border-t mt-16">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="text-center text-sm text-gray-500">
+                    <p>&copy; 2025 TripFlow. 여행 스케줄 공유 플랫폼</p>
+                    <p class="mt-2">이 스케줄을 <a href="/" class="text-indigo-600 hover:text-indigo-800">TripFlow</a>에서 만들어보세요!</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">스케줄 공유</h3>
+                    <button id="close-share-modal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">링크 복사</label>
+                        <div class="flex">
+                            <input id="share-url" type="text" readonly class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <button id="copy-url" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700">
+                                복사
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="share-kakao" class="flex-1 bg-yellow-400 text-white px-4 py-2 rounded hover:bg-yellow-500">
+                            카카오톡
+                        </button>
+                        <button id="share-facebook" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            페이스북
+                        </button>
+                        <button id="share-twitter" class="flex-1 bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500">
+                            트위터
+                        </button>
+                    </div>
+                    
+                    <!-- QR Code Section -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">QR 코드</label>
+                        <div class="text-center">
+                            <div id="qr-code-container" class="inline-block p-4 bg-white border border-gray-300 rounded-lg">
+                                <!-- QR code will be generated here -->
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">QR 코드를 스캔하여 스케줄에 접근하세요</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Embed Code Section -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">임베드 코드</label>
+                        <div class="flex">
+                            <textarea id="embed-code" readonly class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs font-mono" rows="3"></textarea>
+                            <button id="copy-embed" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700">
+                                복사
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">이 코드를 웹사이트에 붙여넣어 스케줄을 임베드하세요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Public Schedule Viewer Application
+        class PublicScheduleViewer {
+            constructor() {
+                this.scheduleId = this.getScheduleIdFromUrl();
+                this.isDarkMode = false;
+                this.currentSchedule = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadTheme();
+                if (this.scheduleId) {
+                    this.fetchAndDisplaySchedule();
+                } else {
+                    this.showError('유효하지 않은 스케줄 ID입니다.');
+                }
+            }
+
+            getScheduleIdFromUrl() {
+                const path = window.location.pathname;
+                const match = path.match(/\/s\/([a-f0-9-]+)/);
+                return match ? match[1] : null;
+            }
+
+            setupEventListeners() {
+                // Theme toggle
+                const themeToggle = document.getElementById('theme-toggle');
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', () => {
+                        this.toggleTheme();
+                    });
+                }
+
+                // Print button
+                const printButton = document.getElementById('print-button');
+                if (printButton) {
+                    printButton.addEventListener('click', () => {
+                        window.print();
+                    });
+                }
+
+                // Share button
+                const shareButton = document.getElementById('share-button');
+                if (shareButton) {
+                    shareButton.addEventListener('click', () => {
+                        this.showShareModal();
+                    });
+                }
+
+                // Share modal
+                const closeShareModal = document.getElementById('close-share-modal');
+                if (closeShareModal) {
+                    closeShareModal.addEventListener('click', () => {
+                        this.hideShareModal();
+                    });
+                }
+
+                // Copy URL
+                const copyUrl = document.getElementById('copy-url');
+                if (copyUrl) {
+                    copyUrl.addEventListener('click', () => {
+                        this.copyToClipboard();
+                    });
+                }
+
+                // Copy Embed Code
+                const copyEmbed = document.getElementById('copy-embed');
+                if (copyEmbed) {
+                    copyEmbed.addEventListener('click', () => {
+                        this.copyEmbedCode();
+                    });
+                }
+
+                // Social sharing
+                const shareKakao = document.getElementById('share-kakao');
+                if (shareKakao) {
+                    shareKakao.addEventListener('click', () => {
+                        this.shareToKakao();
+                    });
+                }
+
+                const shareFacebook = document.getElementById('share-facebook');
+                if (shareFacebook) {
+                    shareFacebook.addEventListener('click', () => {
+                        this.shareToFacebook();
+                    });
+                }
+
+                const shareTwitter = document.getElementById('share-twitter');
+                if (shareTwitter) {
+                    shareTwitter.addEventListener('click', () => {
+                        this.shareToTwitter();
+                    });
+                }
+            }
+
+            loadTheme() {
+                const savedTheme = localStorage.getItem('tripflow-theme');
+                if (savedTheme === 'dark') {
+                    this.isDarkMode = true;
+                    document.documentElement.classList.add('dark');
+                    this.updateThemeIcon();
+                }
+            }
+
+            toggleTheme() {
+                this.isDarkMode = !this.isDarkMode;
+                if (this.isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('tripflow-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('tripflow-theme', 'light');
+                }
+                this.updateThemeIcon();
+            }
+
+            updateThemeIcon() {
+                const themeIcon = document.getElementById('theme-icon');
+                if (themeIcon) {
+                    if (this.isDarkMode) {
+                        themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+                    } else {
+                        themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
+                    }
+                }
+            }
+
+            async fetchAndDisplaySchedule() {
+                try {
+                    this.showLoading();
+                    const response = await fetch(`/api/schedules/${this.scheduleId}`);
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('스케줄을 찾을 수 없습니다.');
+                        } else if (response.status === 403) {
+                            throw new Error('이 스케줄은 비공개 설정되어 있습니다.');
+                        } else {
+                            throw new Error(`서버 오류: ${response.status}`);
+                        }
+                    }
+                    
+                    const schedule = await response.json();
+                    this.currentSchedule = schedule;
+                    this.displayScheduleContent(schedule);
+                    this.showMainContent();
+                    
+                } catch (error) {
+                    console.error('Error fetching schedule:', error);
+                    this.showError(error.message);
+                }
+            }
+
+            displayScheduleContent(schedule) {
+                // Update title
+                const titleElement = document.getElementById('schedule-title');
+                if (titleElement) {
+                    titleElement.textContent = schedule.title || '스케줄';
+                }
+
+                // Update meta information
+                const createdDate = document.getElementById('created-date');
+                if (createdDate) {
+                    const date = new Date(schedule.created_at);
+                    createdDate.textContent = date.toLocaleDateString('ko-KR');
+                }
+
+                const viewCount = document.getElementById('view-count');
+                if (viewCount) {
+                    viewCount.textContent = `${schedule.share_count || 0}회 공유`;
+                }
+
+                // Update description
+                const descriptionText = document.getElementById('description-text');
+                if (descriptionText && schedule.description) {
+                    descriptionText.textContent = schedule.description;
+                } else {
+                    const descriptionDiv = document.getElementById('schedule-description');
+                    if (descriptionDiv) {
+                        descriptionDiv.style.display = 'none';
+                    }
+                }
+
+                // Update content
+                const contentElement = document.getElementById('schedule-content-display');
+                if (contentElement) {
+                    let content = schedule.content || '';
+                    
+                    // Check if content is Markdown
+                    const isMarkdown = this.isMarkdownContent(content);
+                    
+                    if (isMarkdown) {
+                        content = marked.parse(content);
+                    }
+                    
+                    // Sanitize HTML
+                    content = DOMPurify.sanitize(content);
+                    
+                    contentElement.innerHTML = content;
+                }
+
+                // Update page title
+                document.title = `${schedule.title} - TripFlow`;
+            }
+
+            isMarkdownContent(content) {
+                const markdownPatterns = [
+                    /^#{1,6}\s+/m,
+                    /\*\*.*\*\*/,
+                    /\*.*\*/,
+                    /^\s*[-*+]\s+/m,
+                    /^\s*\d+\.\s+/m,
+                    /```[\s\S]*```/,
+                    /`[^`]+`/,
+                    /\[.*\]\(.*\)/,
+                    /!\[.*\]\(.*\)/,
+                ];
+                
+                return markdownPatterns.some(pattern => pattern.test(content));
+            }
+
+            showLoading() {
+                document.getElementById('loading-state').classList.remove('hidden');
+                document.getElementById('error-state').classList.add('hidden');
+                document.getElementById('main-content').classList.add('hidden');
+            }
+
+            showError(message) {
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
+                document.getElementById('main-content').classList.add('hidden');
+                
+                // Update error message
+                const errorMessage = document.querySelector('#error-state p');
+                if (errorMessage) {
+                    errorMessage.textContent = message;
+                }
+            }
+
+            showMainContent() {
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('error-state').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+            }
+
+            showShareModal() {
+                const modal = document.getElementById('share-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    const shareUrl = document.getElementById('share-url');
+                    if (shareUrl) {
+                        shareUrl.value = window.location.href;
+                    }
+                    
+                    // Generate QR code and embed code
+                    this.generateQRCode();
+                    this.generateEmbedCode();
+                }
+            }
+
+            hideShareModal() {
+                const modal = document.getElementById('share-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            async copyToClipboard() {
+                const shareUrl = document.getElementById('share-url');
+                if (shareUrl) {
+                    try {
+                        await navigator.clipboard.writeText(shareUrl.value);
+                        const copyButton = document.getElementById('copy-url');
+                        const originalText = copyButton.textContent;
+                        copyButton.textContent = '복사됨!';
+                        setTimeout(() => {
+                            copyButton.textContent = originalText;
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy: ', err);
+                    }
+                }
+            }
+
+            shareToKakao() {
+                const url = encodeURIComponent(window.location.href);
+                const title = encodeURIComponent(this.currentSchedule?.title || 'TripFlow 스케줄');
+                window.open(`https://story.kakao.com/share?url=${url}&text=${title}`, '_blank');
+                this.incrementShareCount();
+            }
+
+            shareToFacebook() {
+                const url = encodeURIComponent(window.location.href);
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+                this.incrementShareCount();
+            }
+
+            shareToTwitter() {
+                const url = encodeURIComponent(window.location.href);
+                const title = encodeURIComponent(this.currentSchedule?.title || 'TripFlow 스케줄');
+                window.open(`https://twitter.com/intent/tweet?url=${url}&text=${title}`, '_blank');
+                this.incrementShareCount();
+            }
+
+            generateQRCode() {
+                const qrContainer = document.getElementById('qr-code-container');
+                if (qrContainer && window.QRCode) {
+                    // Clear previous QR code
+                    qrContainer.innerHTML = '';
+                    
+                    // Generate new QR code
+                    QRCode.toCanvas(qrContainer, window.location.href, {
+                        width: 200,
+                        height: 200,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    }, (error) => {
+                        if (error) {
+                            console.error('QR Code generation error:', error);
+                            qrContainer.innerHTML = '<p class="text-red-500 text-sm">QR 코드 생성 실패</p>';
+                        }
+                    });
+                }
+            }
+
+            generateEmbedCode() {
+                const embedCodeTextarea = document.getElementById('embed-code');
+                if (embedCodeTextarea) {
+                    const embedCode = `<iframe src="${window.location.href}" width="600" height="400" frameborder="0" allowfullscreen></iframe>`;
+                    embedCodeTextarea.value = embedCode;
+                }
+            }
+
+            async copyEmbedCode() {
+                const embedCodeTextarea = document.getElementById('embed-code');
+                if (embedCodeTextarea) {
+                    try {
+                        await navigator.clipboard.writeText(embedCodeTextarea.value);
+                        const copyButton = document.getElementById('copy-embed');
+                        const originalText = copyButton.textContent;
+                        copyButton.textContent = '복사됨!';
+                        setTimeout(() => {
+                            copyButton.textContent = originalText;
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy embed code: ', err);
+                    }
+                }
+            }
+
+            async incrementShareCount() {
+                if (!this.scheduleId) return;
+                
+                try {
+                    const response = await fetch(`/api/schedules/${this.scheduleId}/share`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Update the share count in the UI
+                        const viewCount = document.getElementById('view-count');
+                        if (viewCount) {
+                            const currentCount = parseInt(viewCount.textContent) || 0;
+                            viewCount.textContent = `${currentCount + 1}회 공유`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to increment share count:', error);
+                }
+            }
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new PublicScheduleViewer();
+        });
+    </script>
+</body>
+</html>
