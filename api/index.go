@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,14 +12,38 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 // Global router instance for serverless optimization
 var router *gin.Engine
 
-// Vercel KV configuration
-var kvURL = os.Getenv("KV_REST_API_URL")
-var kvToken = os.Getenv("KV_REST_API_TOKEN")
+// Redis configuration
+var redisURL = os.Getenv("REDIS_URL")
+var redisClient *redis.Client
+
+// initRedis initializes Redis client
+func initRedis() {
+	if redisURL == "" {
+		return
+	}
+	
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		log.Printf("Failed to parse Redis URL: %v", err)
+		return
+	}
+	
+	redisClient = redis.NewClient(opt)
+	
+	// Test connection
+	ctx := context.Background()
+	_, err = redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Printf("Failed to connect to Redis: %v", err)
+		redisClient = nil
+	}
+}
 
 // Handler is the main entry point for Vercel serverless functions
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +63,9 @@ func initRouter() {
 	router = gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+
+	// Initialize Redis connection
+	initRedis()
 
 	
 	// CORS middleware
@@ -275,74 +301,34 @@ func saveMarkdownFile(filename, content string, size int64) error {
 	return kvSet("files:list", string(fileListData))
 }
 
-// kvGet retrieves a value from Vercel KV
+// kvGet retrieves a value from Redis Cloud
 func kvGet(key string) (string, error) {
-	if kvURL == "" || kvToken == "" {
-		return "", fmt.Errorf("KV not configured")
+	if redisClient == nil {
+		return "", fmt.Errorf("Redis not configured")
 	}
 
-	url := kvURL + "/" + key
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+kvToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 404 {
+	ctx := context.Background()
+	val, err := redisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
 		return "", fmt.Errorf("key not found")
 	}
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("KV error: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 
-	return string(body), nil
+	return val, nil
 }
 
-// kvSet stores a value in Vercel KV
+// kvSet stores a value in Redis Cloud
 func kvSet(key, value string) error {
-	if kvURL == "" || kvToken == "" {
-		return fmt.Errorf("KV not configured")
+	if redisClient == nil {
+		return fmt.Errorf("Redis not configured")
 	}
 
-	url := kvURL + "/" + key
-	data := map[string]string{"value": value}
-	jsonData, err := json.Marshal(data)
+	ctx := context.Background()
+	err := redisClient.Set(ctx, key, value, 0).Err()
 	if err != nil {
 		return err
-	}
-
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+kvToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("KV error: %d", resp.StatusCode)
 	}
 
 	return nil
