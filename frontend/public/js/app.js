@@ -83,12 +83,19 @@ class TripFlowViewer {
         }
 
         fileList.innerHTML = this.markdownFiles.map(file => `
-            <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="tripFlowViewer.openFile('${file.name}')">
-                <div class="flex items-center mb-2">
-                    <svg class="h-5 w-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
-                    </svg>
-                    <h3 class="font-medium text-gray-900">${file.name}</h3>
+            <div class="border rounded-lg p-4 hover:bg-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center cursor-pointer" onclick="tripFlowViewer.openFile('${file.name}')">
+                        <svg class="h-5 w-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                        </svg>
+                        <h3 class="font-medium text-gray-900">${file.name}</h3>
+                    </div>
+                    <button onclick="tripFlowViewer.deleteFile('${file.name}')" class="text-red-500 hover:text-red-700 p-1 rounded">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
                 </div>
                 <p class="text-sm text-gray-500">${file.size} bytes</p>
                 <p class="text-xs text-gray-400 mt-1">클릭하여 여행 계획 보기</p>
@@ -152,6 +159,48 @@ class TripFlowViewer {
         const fileList = document.getElementById('file-list');
         if (fileList) {
             fileList.innerHTML = `<p class="text-red-500 col-span-full">${message}</p>`;
+        }
+    }
+
+    async deleteFile(filename) {
+        if (!confirm(`"${filename}" 파일을 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/files/${filename}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showSuccess(`파일이 성공적으로 삭제되었습니다: ${result.filename}`);
+                this.loadFileList(); // Refresh file list
+            } else {
+                this.showError(result.message || '파일 삭제 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            this.showError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
+
+    showSuccess(message) {
+        const fileList = document.getElementById('file-list');
+        if (fileList) {
+            // Create a temporary success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded mb-4';
+            successDiv.innerHTML = `✓ ${message}`;
+            fileList.insertBefore(successDiv, fileList.firstChild);
+            
+            // Remove success message after 3 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.parentNode.removeChild(successDiv);
+                }
+            }, 3000);
         }
     }
 
