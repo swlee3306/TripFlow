@@ -195,7 +195,7 @@ func initRouter() {
 			}
 
 			// Validate file type
-			allowedTypes := []string{".md", ".markdown"}
+			allowedTypes := []string{".md", ".markdown", ".txt"}
 			fileExt := filepath.Ext(file.Filename)
 			isValidType := false
 			for _, ext := range allowedTypes {
@@ -208,7 +208,7 @@ func initRouter() {
 			if !isValidType {
 				c.JSON(400, gin.H{
 					"error": "Invalid file type",
-					"message": "마크다운 파일만 업로드 가능합니다",
+					"message": "마크다운 또는 텍스트 파일만 업로드 가능합니다",
 				})
 				return
 			}
