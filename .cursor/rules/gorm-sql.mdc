@@ -1,0 +1,21 @@
+---
+description: GORM/SQL 규칙(스키마, 마이그레이션, 인덱스, N+1 방지)
+globs:
+  - "internal/repo/**.go"
+  - "**/*model*.go"
+  - "**/*gorm*.go"
+  - "migrations/**"
+---
+
+# GORM & SQL
+
+**모델링**
+- 복합 Unique/Index는 명시적으로 태그 및 마이그레이션 스크립트에 반영.
+- NULL vs Zero-value 명확화, 타임존은 UTC 기준 저장.
+
+**쿼리**
+- eager preload는 제한적으로, 목록 API는 페이지네이션(커서 기반 권장).
+- 트랜잭션 경계는 서비스 레벨에서 관리, ctx 전파.
+
+**테스트**
+- 마이그레이션 idempotent 검증, 쿼리 플랜 확인(핵심 테이블 EXPLAIN)

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripFlow - 스케줄 뷰어 테스트</title>
+    
+    <!-- Tailwind CSS -->
+    <link href="./css/output.css" rel="stylesheet">
+    
+    <!-- Markdown processing libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.1/dist/purify.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">TripFlow 스케줄 뷰어 테스트</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">테스트 스케줄 ID</h2>
+            <p class="text-gray-600 mb-4">다음 스케줄 ID를 사용하여 테스트하세요:</p>
+            <code class="bg-gray-100 p-2 rounded block mb-4">dbea7f17-bd19-4913-9025-3905635c82b2</code>
+            <button id="test-schedule" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                스케줄 불러오기 테스트
+            </button>
+        </div>
+        
+        <!-- Schedule Content Display -->
+        <div id="schedule-content-section" class="hidden bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="schedule-title" class="text-2xl font-bold text-gray-900">스케줄 보기</h2>
+                <div class="flex items-center space-x-4">
+                    <!-- Dark/Light Mode Toggle -->
+                    <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                        <svg id="theme-icon" class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                    <button id="close-schedule" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                        <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Schedule Content Display -->
+            <div id="schedule-content-display" class="prose prose-lg max-w-none dark:prose-invert">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+        </div>
+        
+        <!-- Test Markdown Content -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">마크다운 테스트</h2>
+            <button id="test-markdown" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
+                마크다운 렌더링 테스트
+            </button>
+            <div id="markdown-test-result" class="prose prose-lg max-w-none dark:prose-invert">
+                <!-- Markdown test result will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test application
+        class TestApp {
+            constructor() {
+                this.isDarkMode = false;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadTheme();
+            }
+
+            setupEventListeners() {
+                document.getElementById('test-schedule').addEventListener('click', () => {
+                    this.testScheduleFetch();
+                });
+
+                document.getElementById('test-markdown').addEventListener('click', () => {
+                    this.testMarkdownRendering();
+                });
+
+                document.getElementById('theme-toggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+
+                document.getElementById('close-schedule').addEventListener('click', () => {
+                    this.hideScheduleViewer();
+                });
+            }
+
+            loadTheme() {
+                const savedTheme = localStorage.getItem('tripflow-theme');
+                if (savedTheme === 'dark') {
+                    this.isDarkMode = true;
+                    document.documentElement.classList.add('dark');
+                    this.updateThemeIcon();
+                }
+            }
+
+            toggleTheme() {
+                this.isDarkMode = !this.isDarkMode;
+                if (this.isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('tripflow-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('tripflow-theme', 'light');
+                }
+                this.updateThemeIcon();
+            }
+
+            updateThemeIcon() {
+                const themeIcon = document.getElementById('theme-icon');
+                if (this.isDarkMode) {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+                } else {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
+                }
+            }
+
+            async testScheduleFetch() {
+                try {
+                    const scheduleId = 'dbea7f17-bd19-4913-9025-3905635c82b2';
+                    const response = await fetch(`http://localhost:8086/api/schedules/${scheduleId}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const schedule = await response.json();
+                    this.displayScheduleContent(schedule);
+                    this.showScheduleViewer();
+                    
+                } catch (error) {
+                    console.error('Error fetching schedule:', error);
+                    alert(`스케줄을 불러오는데 실패했습니다: ${error.message}`);
+                }
+            }
+
+            displayScheduleContent(schedule) {
+                const titleElement = document.getElementById('schedule-title');
+                const contentElement = document.getElementById('schedule-content-display');
+                
+                if (titleElement) {
+                    titleElement.textContent = schedule.title || '스케줄 보기';
+                }
+                
+                if (contentElement) {
+                    let content = schedule.content || '';
+                    
+                    // Check if content is Markdown
+                    const isMarkdown = this.isMarkdownContent(content);
+                    
+                    if (isMarkdown) {
+                        content = marked.parse(content);
+                    }
+                    
+                    // Sanitize HTML
+                    content = DOMPurify.sanitize(content);
+                    
+                    contentElement.innerHTML = content;
+                }
+            }
+
+            isMarkdownContent(content) {
+                const markdownPatterns = [
+                    /^#{1,6}\s+/m,
+                    /\*\*.*\*\*/,
+                    /\*.*\*/,
+                    /^\s*[-*+]\s+/m,
+                    /^\s*\d+\.\s+/m,
+                    /```[\s\S]*```/,
+                    /`[^`]+`/,
+                    /\[.*\]\(.*\)/,
+                    /!\[.*\]\(.*\)/,
+                ];
+                
+                return markdownPatterns.some(pattern => pattern.test(content));
+            }
+
+            testMarkdownRendering() {
+                const testMarkdown = `
+# 제주도 3박 4일 여행
+
+## 1일차 - 제주시
+- **오전**: 제주공항 도착
+- **점심**: 제주시내 맛집 투어
+- **오후**: 제주도립미술관 관람
+- **저녁**: 동문시장 야시장
+
+## 2일차 - 서귀포
+- **오전**: 중문관광단지
+- **점심**: 서귀포 매운맛집
+- **오후**: 천지연폭포
+- **저녁**: 서귀포 칠십리
+
+## 3일차 - 한라산
+- **오전**: 한라산 등반
+- **점심**: 산정상에서 도시락
+- **오후**: 하산 후 휴식
+- **저녁**: 제주시내에서 회식
+
+## 4일차 - 출발
+- **오전**: 마지막 쇼핑
+- **점심**: 공항 근처 식당
+- **오후**: 제주공항 출발
+
+### 예산
+- 항공료: 200,000원
+- 숙박비: 150,000원
+- 식비: 100,000원
+- 교통비: 50,000원
+
+**총 예산: 500,000원**
+                `;
+
+                const resultElement = document.getElementById('markdown-test-result');
+                const htmlContent = marked.parse(testMarkdown);
+                const sanitizedContent = DOMPurify.sanitize(htmlContent);
+                
+                resultElement.innerHTML = sanitizedContent;
+            }
+
+            showScheduleViewer() {
+                const section = document.getElementById('schedule-content-section');
+                section.classList.remove('hidden');
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            hideScheduleViewer() {
+                const section = document.getElementById('schedule-content-section');
+                section.classList.add('hidden');
+            }
+        }
+
+        // Initialize the test application
+        document.addEventListener('DOMContentLoaded', () => {
+            new TestApp();
+        });
+    </script>
+</body>
+</html>

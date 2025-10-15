@@ -1,0 +1,11 @@
+{
+	"mcpServers": {
+		"task-master-ai": {
+			"command": "npx",
+			"args": ["-y", "--package=task-master-ai", "task-master-ai"],
+			"env": {
+				"GOOGLE_API_KEY":"AIzaSyC86p8mrbd5qPiq25Fdv5XiiSRvDgT7DaQ"
+			}
+		}
+	}
+}

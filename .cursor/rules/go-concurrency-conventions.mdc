@@ -1,0 +1,13 @@
+---
+description: "컨텍스트 전파·채널 크기·워커 종료·타임아웃"
+globs:
+  - "**/*.go"
+  - "**/*worker*.go"
+---
+
+# CONCURRENCY
+
+- 모든 I/O 경로는 `ctx context.Context`를 첫 인자로 받아서 취소/타임아웃 전파.
+- goroutine 시작 시 `go func(ctx context.Context){ ... }(ctx)` + `WaitGroup` 정리.
+- 채널은 기본 **무버퍼 혹은 크기 1**. 큰 버퍼는 근거·백프레셔 전략을 명시.
+- `errgroup`/`RunGroup`으로 묶고, 종료는 `ctx.Done()`을 반드시 감시.

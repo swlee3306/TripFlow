@@ -1,0 +1,36 @@
+{
+  "name": "tripflow-frontend",
+  "version": "1.0.0",
+  "description": "TripFlow Frontend - Travel Schedule Sharing Platform",
+  "main": "index.js",
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css",
+    "watch-css": "tailwindcss -i ./src/input.css -o ./public/css/output.css --watch",
+    "dev": "npm run watch-css",
+    "build": "npm run build-css",
+    "vercel-build": "npm run build-css"
+  },
+  "keywords": [
+    "travel",
+    "schedule",
+    "sharing",
+    "markdown"
+  ],
+  "author": "TripFlow Team",
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.545.0",
+    "postcss": "^8.4.32",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.19"
+  },
+  "type": "commonjs"
+}

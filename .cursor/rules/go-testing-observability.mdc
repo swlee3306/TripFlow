@@ -1,0 +1,22 @@
+---
+description: 테스트, 벤치, 로깅·메트릭 관찰성 규칙
+globs:
+  - "**/*_test.go"
+  - "internal/**/**/*.go"
+---
+
+# TESTING & OBSERVABILITY
+
+**테스트 방향**
+- 단위: table-driven, 빠른 실행, 외부IO 목킹
+- 통합: ephemeral 리소스(docker 또는 testcontainers) 제안
+- 벤치: `go test -bench=. -benchmem` 결과를 PR에 요약
+
+**가시성**
+- 로깅은 레벨/키 규칙 준수
+- 메트릭: Prometheus 규약 준수(HELP/TYPE, 단위 접미사, 라벨 카디널리티 제한)
+
+**자동 체크리스트 (AI가 완료 전 확인)**
+- [ ] 실패 경로 테스트 포함
+- [ ] 경합 조건 재현 테스트(레이스 검사)
+- [ ] 메트릭/로그 라벨 스펙 문서화

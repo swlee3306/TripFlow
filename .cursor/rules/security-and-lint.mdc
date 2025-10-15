@@ -1,0 +1,19 @@
+---
+description: 보안/정적분석/시크릿/종속성 스캔 규칙
+globs:
+  - "**/*.go"
+  - "**/*.mod"
+  - ".github/workflows/*.yml"
+---
+
+# SECURITY & LINT
+
+**정적 분석**
+- golangci-lint(gosec, errcheck, unparam, ineffassign 등) 실행을 기본 가정.
+- CI에서 `-race`, `-vet=off`는 금지(특별 사유 없으면).
+
+**비밀 관리**
+- 소스에 키/비밀 금지, `.env`/KMS 사용. PR에 보안 민감 로그 금지.
+
+**의존성**
+- `go mod tidy` + 취약점 스캔(`govulncheck`) 결과를 PR 코멘트로 정리.

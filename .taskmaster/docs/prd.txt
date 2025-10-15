@@ -1,0 +1,144 @@
+# TripFlow - 여행 스케줄 공유 플랫폼 PRD
+
+## 프로젝트 개요
+여행 스케줄을 Markdown 파일로 업로드하면 누구나 웹사이트에서 볼 수 있고 공유할 수 있는 플랫폼을 개발합니다.
+
+## 핵심 기능
+
+### 1. 파일 업로드 기능
+- Markdown 파일(.md) 업로드 지원
+- 파일 크기 제한: 10MB
+- 지원 형식: .md, .markdown
+- 드래그 앤 드롭 업로드 인터페이스
+
+### 2. Markdown 파싱 및 변환
+- Markdown 파일을 HTML로 변환
+- 여행 스케줄 구조 파싱 (날짜, 장소, 활동 등)
+- 이미지 링크 처리 및 최적화
+- 테이블, 리스트, 링크 등 Markdown 요소 지원
+
+### 3. 웹사이트 표시 기능
+- 반응형 웹 디자인 (모바일, 태블릿, 데스크톱)
+- 깔끔하고 읽기 쉬운 여행 스케줄 레이아웃
+- 다크/라이트 모드 지원
+- 인쇄 친화적 스타일
+
+### 4. 공유 기능
+- 고유 URL 생성 (예: tripflow.com/schedule/abc123)
+- 소셜 미디어 공유 버튼 (Facebook, Twitter, KakaoTalk)
+- QR 코드 생성
+- 임베드 코드 제공
+
+### 5. 관리 기능
+- 업로드된 스케줄 목록 보기
+- 스케줄 편집/삭제
+- 공개/비공개 설정
+- 방문 통계 (조회수, 공유수)
+
+## 기술 스택
+
+### 백엔드
+- **언어**: Go
+- **프레임워크**: Gin
+- **데이터베이스**: SQLite (개발) / PostgreSQL (프로덕션)
+- **파일 저장**: 로컬 파일시스템 (개발) / AWS S3 (프로덕션)
+- **인증**: JWT 토큰
+
+### 프론트엔드
+- **언어**: HTML5, CSS3, JavaScript (Vanilla)
+- **CSS 프레임워크**: Tailwind CSS
+- **마크다운 파싱**: marked.js
+- **아이콘**: Heroicons
+
+### 배포 및 인프라
+- **배포**: GitHub Actions
+- **호스팅**: GitHub Pages 또는 Vercel
+- **CI/CD**: GitHub Actions
+- **도메인**: 커스텀 도메인 지원
+
+## 데이터베이스 스키마
+
+### schedules 테이블
+```sql
+CREATE TABLE schedules (
+    id VARCHAR(36) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    file_path VARCHAR(500),
+    is_public BOOLEAN DEFAULT true,
+    view_count INTEGER DEFAULT 0,
+    share_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### files 테이블
+```sql
+CREATE TABLE files (
+    id VARCHAR(36) PRIMARY KEY,
+    schedule_id VARCHAR(36) REFERENCES schedules(id),
+    original_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size INTEGER NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## API 엔드포인트
+
+### 스케줄 관리
+- `POST /api/schedules` - 스케줄 생성
+- `GET /api/schedules/:id` - 스케줄 조회
+- `PUT /api/schedules/:id` - 스케줄 수정
+- `DELETE /api/schedules/:id` - 스케줄 삭제
+- `GET /api/schedules` - 스케줄 목록 조회
+
+### 파일 관리
+- `POST /api/upload` - 파일 업로드
+- `GET /api/files/:id` - 파일 다운로드
+
+### 공개 페이지
+- `GET /s/:id` - 공개 스케줄 보기
+- `GET /api/schedules/:id/stats` - 통계 조회
+
+## 보안 요구사항
+- 파일 업로드 시 확장자 검증
+- 파일 크기 제한
+- XSS 방지를 위한 HTML 이스케이핑
+- CSRF 토큰 사용
+- Rate limiting 적용
+
+## 성능 요구사항
+- 페이지 로딩 시간: 3초 이내
+- 동시 사용자: 100명
+- 파일 업로드: 10MB 이내
+- 데이터베이스 응답 시간: 500ms 이내
+
+## 사용자 경험 (UX)
+- 직관적인 업로드 인터페이스
+- 실시간 업로드 진행률 표시
+- 모바일 친화적 반응형 디자인
+- 빠른 페이지 로딩
+- 접근성 고려 (WCAG 2.1 AA)
+
+## 배포 전략
+- GitHub Actions를 통한 자동 배포
+- 환경별 설정 분리 (개발/프로덕션)
+- 데이터베이스 마이그레이션 자동화
+- 정적 파일 CDN 활용
+
+## 모니터링 및 로깅
+- 애플리케이션 로그 수집
+- 에러 추적 및 알림
+- 성능 모니터링
+- 사용자 행동 분석
+
+## 향후 확장 계획
+- 사용자 계정 시스템
+- 댓글 및 좋아요 기능
+- 여행 스케줄 템플릿 제공
+- 다국어 지원
+- PWA (Progressive Web App) 지원

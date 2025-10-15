@@ -1,0 +1,14 @@
+---
+description: "네이밍·패키지 컨벤션(패키지/타입/함수/라벨)"
+globs:
+  - "**/*.go"
+---
+
+# NAMING & PACKAGES
+
+- 패키지명: **짧고 의미 있는 단어 하나**, 복수형/언더스코어 지양. (ex. `bytes`, `io`)
+- 타입/인터페이스: `PascalCase`, 접두사 일관성 유지(예: `OctaviaLBExporter`, `MoleCollector`).
+- 메서드 리시버: 한두 글자(도메인 연관 문자). 전역/멀리 쓰일 변수는 더 서술적으로.
+- 함수: **동사+명사**(행위), 반환 중심이면 **명사형**. `Get` 접두사 남발 금지.
+- 약어: Go 관례대로 `ID`, `URL`, `HTTP` 등은 **전체 대문자** 유지(`userID`, `httpClient`).
+- 메트릭/라벨: `namespace_subsystem_metric_unit` + counter는 `_total`, 라벨은 `snake_case`.
