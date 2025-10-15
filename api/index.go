@@ -1,12 +1,10 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -94,13 +92,12 @@ func initRouter() {
 
 		// Get markdown files list
 		api.GET("/files", func(c *gin.Context) {
-			files, err := getMarkdownFiles()
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error": "Failed to read files",
-					"message": "파일 목록을 불러올 수 없습니다",
-				})
-				return
+			// Return static sample file for now
+			files := []gin.H{
+				{
+					"name": "sample-trip.md",
+					"size": 786,
+				},
 			}
 			c.JSON(200, files)
 		})
@@ -108,16 +105,50 @@ func initRouter() {
 		// Get specific markdown file
 		api.GET("/files/:filename", func(c *gin.Context) {
 			filename := c.Param("filename")
-			content, err := getMarkdownFile(filename)
-			if err != nil {
-				c.JSON(404, gin.H{
-					"error": "File not found",
-					"message": "파일을 찾을 수 없습니다",
-				})
+			
+			// Return sample content for demo
+			if filename == "sample-trip.md" {
+				content := `# 제주도 3박 4일 여행
+
+## 1일차 - 제주시
+- **오전**: 제주공항 도착
+- **점심**: 제주시내 맛집 투어
+- **오후**: 제주도립미술관 관람
+- **저녁**: 동문시장 야시장
+
+## 2일차 - 서귀포
+- **오전**: 중문관광단지
+- **점심**: 서귀포 매운맛집
+- **오후**: 천지연폭포
+- **저녁**: 서귀포 칠십리
+
+## 3일차 - 한라산
+- **오전**: 한라산 등반
+- **점심**: 산정상에서 도시락
+- **오후**: 하산 후 휴식
+- **저녁**: 제주시내에서 회식
+
+## 4일차 - 출발
+- **오전**: 마지막 쇼핑
+- **점심**: 공항 근처 식당
+- **오후**: 제주공항 출발
+
+### 예산
+- 항공료: 200,000원
+- 숙박비: 150,000원
+- 식비: 100,000원
+- 교통비: 50,000원
+
+**총 예산: 500,000원**`
+				c.Header("Content-Type", "text/plain; charset=utf-8")
+				c.String(200, content)
 				return
 			}
-			c.Header("Content-Type", "text/plain; charset=utf-8")
-			c.String(200, content)
+			
+			c.JSON(404, gin.H{
+				"error": "File not found",
+				"message": "파일을 찾을 수 없습니다",
+			})
 		})
 
 		// Upload markdown file
@@ -150,40 +181,13 @@ func initRouter() {
 				return
 			}
 
-			// Read file content
-			src, err := file.Open()
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error": "Failed to read file",
-					"message": "파일 읽기 중 오류가 발생했습니다",
-				})
-				return
-			}
-			defer src.Close()
-
-			content, err := ioutil.ReadAll(src)
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error": "Failed to read file content",
-					"message": "파일 내용 읽기 중 오류가 발생했습니다",
-				})
-				return
-			}
-
-			// Save to JSON database
-			if err := saveMarkdownFile(file.Filename, string(content), file.Size); err != nil {
-				c.JSON(500, gin.H{
-					"error": "Failed to save file",
-					"message": "파일 저장 중 오류가 발생했습니다",
-				})
-				return
-			}
-
+			// For demo purposes, just return success
+			// In production, this would save to a proper database
 			c.JSON(200, gin.H{
 				"success": true,
 				"filename": file.Filename,
 				"size": file.Size,
-				"message": "파일이 성공적으로 업로드되었습니다",
+				"message": "파일이 성공적으로 업로드되었습니다 (데모 모드)",
 			})
 		})
 	}
