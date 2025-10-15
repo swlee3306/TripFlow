@@ -5,9 +5,12 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -64,47 +67,32 @@ func main() {
 			})
 		})
 
-		// File upload endpoint
-		api.POST("/upload", func(c *gin.Context) {
-			file, err := c.FormFile("file")
+		// Get markdown files list
+		api.GET("/files", func(c *gin.Context) {
+			files, err := getMarkdownFiles()
 			if err != nil {
-				c.JSON(400, gin.H{
-					"error": "No file uploaded",
-					"message": "파일을 선택해주세요",
+				c.JSON(500, gin.H{
+					"error": "Failed to read files",
+					"message": "파일 목록을 불러올 수 없습니다",
 				})
 				return
 			}
+			c.JSON(200, files)
+		})
 
-			// Validate file type
-			allowedTypes := []string{".md", ".markdown"}
-			fileExt := filepath.Ext(file.Filename)
-			isValidType := false
-			for _, ext := range allowedTypes {
-				if fileExt == ext {
-					isValidType = true
-					break
-				}
-			}
-
-			if !isValidType {
-				c.JSON(400, gin.H{
-					"error": "Invalid file type",
-					"message": "마크다운 파일만 업로드 가능합니다",
+		// Get specific markdown file
+		api.GET("/files/:filename", func(c *gin.Context) {
+			filename := c.Param("filename")
+			content, err := getMarkdownFile(filename)
+			if err != nil {
+				c.JSON(404, gin.H{
+					"error": "File not found",
+					"message": "파일을 찾을 수 없습니다",
 				})
 				return
 			}
-
-			// Generate unique file ID
-			fileId := fmt.Sprintf("%d", time.Now().UnixNano())
-			
-			// For demo purposes, just return success
-			c.JSON(200, gin.H{
-				"success": true,
-				"fileId": fileId,
-				"message": "파일이 성공적으로 업로드되었습니다",
-				"filename": file.Filename,
-				"size": file.Size,
-			})
+			c.Header("Content-Type", "text/plain; charset=utf-8")
+			c.String(200, content)
 		})
 	}
 
@@ -120,4 +108,45 @@ func main() {
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// getMarkdownFiles returns a list of markdown files
+func getMarkdownFiles() ([]gin.H, error) {
+	markdownDir := "markdown-files"
+	if _, err := os.Stat(markdownDir); os.IsNotExist(err) {
+		return []gin.H{}, nil
+	}
+
+	files, err := ioutil.ReadDir(markdownDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var markdownFiles []gin.H
+	for _, file := range files {
+		if !file.IsDir() && (strings.HasSuffix(file.Name(), ".md") || strings.HasSuffix(file.Name(), ".markdown")) {
+			markdownFiles = append(markdownFiles, gin.H{
+				"name": file.Name(),
+				"size": file.Size(),
+			})
+		}
+	}
+
+	return markdownFiles, nil
+}
+
+// getMarkdownFile returns the content of a specific markdown file
+func getMarkdownFile(filename string) (string, error) {
+	// Security check: prevent directory traversal
+	if strings.Contains(filename, "..") || strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
+		return "", fmt.Errorf("invalid filename")
+	}
+
+	filePath := filepath.Join("markdown-files", filename)
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
 }
