@@ -4,8 +4,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,6 +47,49 @@ func main() {
 				"title": "Sample Schedule",
 				"description": "This is a sample schedule",
 				"is_public": true,
+			})
+		})
+
+		// File upload endpoint
+		api.POST("/upload", func(c *gin.Context) {
+			file, err := c.FormFile("file")
+			if err != nil {
+				c.JSON(400, gin.H{
+					"error": "No file uploaded",
+					"message": "파일을 선택해주세요",
+				})
+				return
+			}
+
+			// Validate file type
+			allowedTypes := []string{".md", ".markdown"}
+			fileExt := filepath.Ext(file.Filename)
+			isValidType := false
+			for _, ext := range allowedTypes {
+				if fileExt == ext {
+					isValidType = true
+					break
+				}
+			}
+
+			if !isValidType {
+				c.JSON(400, gin.H{
+					"error": "Invalid file type",
+					"message": "마크다운 파일만 업로드 가능합니다",
+				})
+				return
+			}
+
+			// Generate unique file ID
+			fileId := fmt.Sprintf("%d", time.Now().UnixNano())
+			
+			// For demo purposes, just return success
+			c.JSON(200, gin.H{
+				"success": true,
+				"fileId": fileId,
+				"message": "파일이 성공적으로 업로드되었습니다",
+				"filename": file.Filename,
+				"size": file.Size,
 			})
 		})
 	}
