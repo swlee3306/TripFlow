@@ -26,8 +26,11 @@ var redisClient *redis.Client
 // initRedis initializes Redis client
 func initRedis() {
 	if redisURL == "" {
+		log.Printf("Redis URL not configured")
 		return
 	}
+	
+	log.Printf("Redis URL: %s", redisURL)
 	
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
@@ -43,6 +46,8 @@ func initRedis() {
 	if err != nil {
 		log.Printf("Failed to connect to Redis: %v", err)
 		redisClient = nil
+	} else {
+		log.Printf("Redis connected successfully")
 	}
 }
 
