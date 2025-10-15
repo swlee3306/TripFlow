@@ -181,7 +181,10 @@ class TripFlowApp {
 
             const response = await fetch('/api/upload', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
 
             const result = await response.json();
@@ -334,7 +337,11 @@ class TripFlowApp {
 
     async fetchAndDisplaySchedule(scheduleId) {
         try {
-            const response = await fetch(`/api/schedules/${scheduleId}`);
+            const response = await fetch(`/api/schedules/${scheduleId}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
