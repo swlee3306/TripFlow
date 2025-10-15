@@ -17,10 +17,20 @@ import (
 func main() {
 	// Simple serverless function for Vercel
 	gin.SetMode(gin.ReleaseMode)
-	
+
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+
+	// Initialize with sample file if storage is empty
+	if len(fileStorage) == 0 {
+		fileStorage["sample-trip.md"] = MarkdownFile{
+			Filename:  "sample-trip.md",
+			Content:   "# 제주도 3박 4일 여행\n\n## 1일차 - 제주시\n- **오전**: 제주공항 도착\n- **점심**: 제주시내 맛집 투어\n- **오후**: 제주도립미술관 관람\n- **저녁**: 동문시장 야시장\n\n## 2일차 - 서귀포\n- **오전**: 중문관광단지\n- **점심**: 서귀포 매운맛집\n- **오후**: 천지연폭포\n- **저녁**: 서귀포 칠십리\n\n## 3일차 - 한라산\n- **오전**: 한라산 등반\n- **점심**: 산정상에서 도시락\n- **오후**: 하산 후 휴식\n- **저녁**: 제주시내에서 회식\n\n## 4일차 - 출발\n- **오전**: 마지막 쇼핑\n- **점심**: 공항 근처 식당\n- **오후**: 제주공항 출발\n\n### 예산\n- 항공료: 200,000원\n- 숙박비: 150,000원\n- 식비: 100,000원\n- 교통비: 50,000원\n\n**총 예산: 500,000원**",
+			Size:      786,
+			CreatedAt: time.Now().Format(time.RFC3339),
+		}
+	}
 	
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
@@ -141,29 +151,27 @@ func main() {
 	}
 }
 
-// getMarkdownFiles returns a list of markdown files
+// MarkdownFile represents a markdown file in the database
+type MarkdownFile struct {
+	Filename  string `json:"filename"`
+	Content   string `json:"content"`
+	Size      int64  `json:"size"`
+	CreatedAt string `json:"created_at"`
+}
+
+// In-memory storage for files (in production, use a proper database)
+var fileStorage = make(map[string]MarkdownFile)
+
+// getMarkdownFiles returns a list of markdown files from memory storage
 func getMarkdownFiles() ([]gin.H, error) {
-	markdownDir := "frontend/public/markdown-files"
-	if _, err := os.Stat(markdownDir); os.IsNotExist(err) {
-		return []gin.H{}, nil
+	var result []gin.H
+	for _, file := range fileStorage {
+		result = append(result, gin.H{
+			"name": file.Filename,
+			"size": file.Size,
+		})
 	}
-
-	files, err := ioutil.ReadDir(markdownDir)
-	if err != nil {
-		return nil, err
-	}
-
-	var markdownFiles []gin.H
-	for _, file := range files {
-		if !file.IsDir() && (strings.HasSuffix(file.Name(), ".md") || strings.HasSuffix(file.Name(), ".markdown")) {
-			markdownFiles = append(markdownFiles, gin.H{
-				"name": file.Name(),
-				"size": file.Size(),
-			})
-		}
-	}
-
-	return markdownFiles, nil
+	return result, nil
 }
 
 // getMarkdownFile returns the content of a specific markdown file
@@ -173,11 +181,22 @@ func getMarkdownFile(filename string) (string, error) {
 		return "", fmt.Errorf("invalid filename")
 	}
 
-	filePath := filepath.Join("frontend/public/markdown-files", filename)
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return "", err
+	// Get file from memory storage
+	if file, exists := fileStorage[filename]; exists {
+		return file.Content, nil
 	}
 
-	return string(content), nil
+	return "", fmt.Errorf("file not found")
+}
+
+// saveMarkdownFile saves a markdown file to memory storage
+func saveMarkdownFile(filename, content string, size int64) error {
+	// Store file in memory
+	fileStorage[filename] = MarkdownFile{
+		Filename:  filename,
+		Content:   content,
+		Size:      size,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+	return nil
 }
