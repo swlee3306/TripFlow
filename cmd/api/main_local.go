@@ -110,7 +110,7 @@ func main() {
 
 // getMarkdownFiles returns a list of markdown files
 func getMarkdownFiles() ([]gin.H, error) {
-	markdownDir := "markdown-files"
+	markdownDir := "frontend/public/markdown-files"
 	if _, err := os.Stat(markdownDir); os.IsNotExist(err) {
 		return []gin.H{}, nil
 	}
@@ -140,7 +140,7 @@ func getMarkdownFile(filename string) (string, error) {
 		return "", fmt.Errorf("invalid filename")
 	}
 
-	filePath := filepath.Join("markdown-files", filename)
+	filePath := filepath.Join("frontend/public/markdown-files", filename)
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return "", err
