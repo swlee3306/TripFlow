@@ -6,9 +6,7 @@
       "use": "@vercel/go@2.0.0",
       "config": {
         "maxLambdaSize": "15mb",
-        "runtime": "go1.x",
-        "memory": 1024,
-        "maxDuration": 30
+        "runtime": "go1.21"
       }
     },
     {
@@ -31,7 +29,6 @@
   ],
   "installCommand": "cd frontend && npm install",
   "buildCommand": "cd frontend && npm run vercel-build",
-  "outputDirectory": "frontend/public",
   "env": {
     "NODE_ENV": "production"
   }
