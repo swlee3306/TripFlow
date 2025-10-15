@@ -32,9 +32,37 @@ func initRedis() {
 	
 	log.Printf("Redis URL: %s", redisURL)
 	
+	// Parse Redis URL manually to handle Redis Cloud format
+	// redis://default:password@host:port
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		log.Printf("Failed to parse Redis URL: %v", err)
+		// Try manual parsing for Redis Cloud
+		if strings.HasPrefix(redisURL, "redis://") {
+			// Extract components manually
+			parts := strings.Split(redisURL, "@")
+			if len(parts) == 2 {
+				authPart := strings.TrimPrefix(parts[0], "redis://")
+				hostPart := parts[1]
+				
+				authParts := strings.Split(authPart, ":")
+				if len(authParts) == 2 {
+					username := authParts[0]
+					password := authParts[1]
+					
+					opt = &redis.Options{
+						Addr:     hostPart,
+						Username: username,
+						Password: password,
+					}
+					log.Printf("Manual Redis config: %s@%s", username, hostPart)
+				}
+			}
+		}
+	}
+	
+	if opt == nil {
+		log.Printf("Failed to create Redis options")
 		return
 	}
 	
