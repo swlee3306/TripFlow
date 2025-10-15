@@ -16,5 +16,8 @@
     }
   ],
   "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/public"
+  "outputDirectory": "frontend/public",
+  "includeFiles": [
+    "markdown-files/**"
+  ]
 }
