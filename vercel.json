@@ -6,7 +6,7 @@
       "use": "@vercel/go@2.0.0",
       "config": {
         "maxLambdaSize": "15mb",
-        "runtime": "go1.21"
+        "runtime": "go1.22"
       }
     },
     {
