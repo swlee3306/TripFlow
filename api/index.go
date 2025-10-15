@@ -79,30 +79,14 @@ func initRouter() {
 
 		// Get markdown files list
 		api.GET("/files", func(c *gin.Context) {
-			files, err := getMarkdownFiles()
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error": "Failed to read files",
-					"message": "파일 목록을 불러올 수 없습니다",
-				})
-				return
+			// Return static list of markdown files
+			files := []gin.H{
+				{
+					"name": "sample-trip.md",
+					"size": 786,
+				},
 			}
 			c.JSON(200, files)
-		})
-
-		// Get specific markdown file
-		api.GET("/files/:filename", func(c *gin.Context) {
-			filename := c.Param("filename")
-			content, err := getMarkdownFile(filename)
-			if err != nil {
-				c.JSON(404, gin.H{
-					"error": "File not found",
-					"message": "파일을 찾을 수 없습니다",
-				})
-				return
-			}
-			c.Header("Content-Type", "text/plain; charset=utf-8")
-			c.String(200, content)
 		})
 	}
 }
