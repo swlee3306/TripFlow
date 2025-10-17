@@ -70,7 +70,7 @@ class TripFlowViewer {
 
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                this.filters.search = e.target.value.toLowerCase();
+                this.filters.search = e.target.value.trim().toLowerCase();
                 this.applyFilters();
             });
         }
@@ -371,18 +371,38 @@ class TripFlowViewer {
 
     applyFilters() {
         let filtered = [...this.markdownFiles];
+        console.log('🔍 Applying filters:', this.filters);
+        console.log('📁 Original files count:', this.markdownFiles.length);
 
         // Search filter
-        if (this.filters.search) {
-            filtered = filtered.filter(file => 
-                file.name.toLowerCase().includes(this.filters.search)
-            );
+        if (this.filters.search && this.filters.search.length > 0) {
+            const searchTerms = this.filters.search.split(' ').filter(term => term.length > 0);
+            console.log('🔎 Search terms:', searchTerms);
+            
+            filtered = filtered.filter(file => {
+                const fileName = file.name.toLowerCase();
+                const matches = searchTerms.every(term => fileName.includes(term));
+                if (matches) {
+                    console.log('✅ Match found:', file.name);
+                }
+                return matches;
+            });
+            console.log('📊 After search filter:', filtered.length);
         }
 
         // Type filter
         if (this.filters.type !== 'all') {
             filtered = filtered.filter(file => {
-                const extension = file.name.toLowerCase().split('.').pop();
+                const fileName = file.name.toLowerCase();
+                const lastDotIndex = fileName.lastIndexOf('.');
+                
+                if (lastDotIndex === -1) {
+                    // No extension
+                    return this.filters.type === 'txt';
+                }
+                
+                const extension = fileName.substring(lastDotIndex + 1);
+                
                 if (this.filters.type === 'md') {
                     return extension === 'md' || extension === 'markdown';
                 } else if (this.filters.type === 'txt') {
@@ -449,6 +469,47 @@ class TripFlowViewer {
 
         this.filteredFiles = [];
         this.renderFileList();
+    }
+
+    // Test function for search functionality
+    testSearchFunctionality() {
+        console.log('🧪 Testing search functionality...');
+        
+        // Test with sample data
+        const testFiles = [
+            { name: 'my-trip-plan.md', size: 1024 },
+            { name: 'vacation-notes.txt', size: 512 },
+            { name: 'travel-guide.md', size: 2048 },
+            { name: 'hotel-booking.txt', size: 256 },
+            { name: 'flight-details.md', size: 1536 }
+        ];
+        
+        console.log('📁 Test files:', testFiles);
+        
+        // Test search scenarios
+        const testCases = [
+            { search: 'trip', expected: ['my-trip-plan.md'] },
+            { search: 'md', expected: ['my-trip-plan.md', 'travel-guide.md', 'flight-details.md'] },
+            { search: 'txt', expected: ['vacation-notes.txt', 'hotel-booking.txt'] },
+            { search: 'travel guide', expected: ['travel-guide.md'] },
+            { search: 'hotel booking', expected: ['hotel-booking.txt'] },
+            { search: 'xyz', expected: [] }
+        ];
+        
+        testCases.forEach((testCase, index) => {
+            console.log(`\n🧪 Test case ${index + 1}: "${testCase.search}"`);
+            
+            // Simulate search
+            const searchTerms = testCase.search.split(' ').filter(term => term.length > 0);
+            const results = testFiles.filter(file => {
+                const fileName = file.name.toLowerCase();
+                return searchTerms.every(term => fileName.includes(term));
+            });
+            
+            console.log('Expected:', testCase.expected);
+            console.log('Actual:', results.map(f => f.name));
+            console.log('✅ Test passed:', JSON.stringify(results.map(f => f.name)) === JSON.stringify(testCase.expected));
+        });
     }
 
     showError(message) {
@@ -584,6 +645,14 @@ class TripFlowViewer {
 document.addEventListener('DOMContentLoaded', () => {
     try {
         window.tripFlowViewer = new TripFlowViewer();
+        
+        // Add test function to global scope for testing
+        window.testSearch = () => {
+            window.tripFlowViewer.testSearchFunctionality();
+        };
+        
+        console.log('🚀 TripFlow Viewer initialized');
+        console.log('🧪 Run testSearch() in console to test search functionality');
     } catch (error) {
         console.error('TripFlow Viewer initialization error:', error);
     }
