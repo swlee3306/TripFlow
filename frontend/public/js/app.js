@@ -3,6 +3,8 @@ class TripFlowViewer {
     constructor() {
         this.markdownFiles = [];
         this.currentFile = null;
+        this.originalContent = null;
+        this.isEditing = false;
         this.init();
     }
 
@@ -16,6 +18,29 @@ class TripFlowViewer {
         if (closeViewer) {
             closeViewer.addEventListener('click', () => {
                 this.hideViewer();
+            });
+        }
+
+        // Edit functionality
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                this.startEditing();
+            });
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveFile();
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.cancelEditing();
             });
         }
 
@@ -108,6 +133,8 @@ class TripFlowViewer {
             const response = await fetch(`/api/files/${filename}`);
             if (response.ok) {
                 const content = await response.text();
+                this.currentFile = filename;
+                this.originalContent = content;
                 this.displayMarkdown(filename, content);
             } else {
                 this.showError('파일을 불러올 수 없습니다.');
@@ -159,6 +186,91 @@ class TripFlowViewer {
         const viewer = document.getElementById('markdown-viewer');
         if (viewer) {
             viewer.classList.add('hidden');
+        }
+        this.exitEditMode();
+    }
+
+    startEditing() {
+        if (!this.currentFile) return;
+
+        this.isEditing = true;
+        const contentElement = document.getElementById('markdown-content');
+        const editorContainer = document.getElementById('editor-container');
+        const editor = document.getElementById('file-editor');
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        // Hide content, show editor
+        if (contentElement) contentElement.classList.add('hidden');
+        if (editorContainer) editorContainer.classList.remove('hidden');
+        
+        // Update buttons
+        if (editBtn) editBtn.classList.add('hidden');
+        if (saveBtn) saveBtn.classList.remove('hidden');
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+        // Set editor content
+        if (editor) {
+            editor.value = this.originalContent;
+            editor.focus();
+        }
+    }
+
+    cancelEditing() {
+        this.exitEditMode();
+    }
+
+    exitEditMode() {
+        this.isEditing = false;
+        const contentElement = document.getElementById('markdown-content');
+        const editorContainer = document.getElementById('editor-container');
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        // Show content, hide editor
+        if (contentElement) contentElement.classList.remove('hidden');
+        if (editorContainer) editorContainer.classList.add('hidden');
+        
+        // Update buttons
+        if (editBtn) editBtn.classList.remove('hidden');
+        if (saveBtn) saveBtn.classList.add('hidden');
+        if (cancelBtn) cancelBtn.classList.add('hidden');
+    }
+
+    async saveFile() {
+        if (!this.currentFile) return;
+
+        const editor = document.getElementById('file-editor');
+        if (!editor) return;
+
+        const newContent = editor.value;
+        
+        try {
+            const response = await fetch(`/api/files/${this.currentFile}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: newContent
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.originalContent = newContent;
+                this.displayMarkdown(this.currentFile, newContent);
+                this.exitEditMode();
+                this.showSuccess('파일이 성공적으로 저장되었습니다.');
+            } else {
+                this.showError(result.message || '파일 저장 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            this.showError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
         }
     }
 
