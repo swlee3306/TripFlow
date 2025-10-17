@@ -382,20 +382,26 @@ class TripFlowViewer {
         console.log('🔍 Applying filters:', this.filters);
         console.log('📁 Original files count:', this.markdownFiles.length);
 
-        // Search filter
-        if (this.filters.search && this.filters.search.length > 0) {
-            const searchTerms = this.filters.search.split(' ').filter(term => term.length > 0);
+        // Search filter - 더 엄격한 검증
+        if (this.filters.search && this.filters.search.trim().length > 0) {
+            const searchTerms = this.filters.search.trim().split(' ').filter(term => term.length > 0);
             console.log('🔎 Search terms:', searchTerms);
             
-            filtered = filtered.filter(file => {
-                const fileName = file.name.toLowerCase();
-                const matches = searchTerms.every(term => fileName.includes(term));
-                if (matches) {
-                    console.log('✅ Match found:', file.name);
-                }
-                return matches;
-            });
-            console.log('📊 After search filter:', filtered.length);
+            if (searchTerms.length > 0) {
+                filtered = filtered.filter(file => {
+                    const fileName = file.name.toLowerCase();
+                    const matches = searchTerms.every(term => fileName.includes(term.toLowerCase()));
+                    if (matches) {
+                        console.log('✅ Match found:', file.name);
+                    }
+                    return matches;
+                });
+                console.log('📊 After search filter:', filtered.length);
+            } else {
+                console.log('⚠️ No valid search terms, showing all files');
+            }
+        } else {
+            console.log('📝 No search filter applied, showing all files');
         }
 
         // Type filter
@@ -541,7 +547,13 @@ class TripFlowViewer {
         const value = e.target.value;
         console.log('🔍 Search input handler triggered:', value);
         
-        this.filters.search = value.trim().toLowerCase();
+        // 더 엄격한 검증
+        const trimmedValue = value.trim();
+        this.filters.search = trimmedValue;
+        
+        console.log('🔍 Processed search value:', trimmedValue);
+        console.log('🔍 Search length:', trimmedValue.length);
+        
         this.applyFilters();
     }
 
@@ -555,7 +567,12 @@ class TripFlowViewer {
             if (searchInput && searchInput.value !== lastValue) {
                 console.log('🔄 Polling detected change:', searchInput.value);
                 lastValue = searchInput.value;
-                this.filters.search = searchInput.value.trim().toLowerCase();
+                
+                // 더 엄격한 검증
+                const trimmedValue = searchInput.value.trim();
+                this.filters.search = trimmedValue;
+                
+                console.log('🔄 Polling processed value:', trimmedValue);
                 this.applyFilters();
             }
         }, 100); // Check every 100ms
@@ -798,6 +815,16 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('🧪 Running all search tests...');
             window.tripFlowViewer.testSearchFunctionality();
             window.tripFlowViewer.testKoreanSearch();
+        };
+        
+        window.debugSearch = (searchTerm) => {
+            console.log('🔍 Debug search for:', searchTerm);
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = searchTerm;
+                const event = new Event('input', { bubbles: true });
+                searchInput.dispatchEvent(event);
+            }
         };
         
         console.log('🚀 TripFlow Viewer initialized');
