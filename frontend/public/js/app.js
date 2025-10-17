@@ -170,8 +170,13 @@ class TripFlowViewer {
         const fileCount = document.getElementById('file-count');
         if (!fileList) return;
 
+        console.log('🎯 RENDER START - filteredFiles:', this.filteredFiles.length);
+        console.log('🎯 RENDER START - markdownFiles:', this.markdownFiles.length);
+
         // Use filtered files for rendering
         const filesToRender = this.filteredFiles.length > 0 ? this.filteredFiles : this.markdownFiles;
+        console.log('🎯 FILES TO RENDER:', filesToRender.length);
+        console.log('🎯 FILES TO RENDER CONTENT:', filesToRender.map(f => f.name));
 
         if (filesToRender.length === 0) {
             if (this.markdownFiles.length === 0) {
@@ -459,7 +464,10 @@ class TripFlowViewer {
         });
 
         this.filteredFiles = filtered;
+        console.log('🎯 FILTERED FILES SET:', this.filteredFiles.length);
+        console.log('🎯 FILTERED FILES CONTENT:', this.filteredFiles.map(f => f.name));
         this.renderFileList();
+        console.log('🎯 RENDER CALLED');
     }
 
     clearAllFilters() {
@@ -945,7 +953,9 @@ function initializeApp() {
                     console.log('🎯 DIRECT ONINPUT:', e.target.value);
                     if (window.tripFlowViewer) {
                         window.tripFlowViewer.filters.search = e.target.value.trim();
+                        console.log('🎯 DIRECT FILTER UPDATE:', window.tripFlowViewer.filters);
                         window.tripFlowViewer.applyFilters();
+                        console.log('🎯 DIRECT RENDER CALLED');
                     }
                 };
                 console.log('✅ Direct oninput listener added');
