@@ -48,22 +48,11 @@ class TripFlowViewer {
             });
         }
         
-        // Use event delegation for better reliability
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'search-input') {
-                console.log('🔍 Search input via delegation:', e.target.value);
-                this.filters.search = e.target.value.trim().toLowerCase();
-                this.applyFilters();
-            }
-        });
+        // Enhanced search input handling with multiple approaches
+        this.setupSearchInput();
         
-        document.addEventListener('keyup', (e) => {
-            if (e.target.id === 'search-input') {
-                console.log('⌨️ Search keyup via delegation:', e.target.value);
-                this.filters.search = e.target.value.trim().toLowerCase();
-                this.applyFilters();
-            }
-        });
+        // Start polling as ultimate fallback
+        this.startSearchPolling();
 
         // Edit functionality
         const editBtn = document.getElementById('edit-btn');
@@ -488,6 +477,88 @@ class TripFlowViewer {
 
         this.filteredFiles = [];
         this.renderFileList();
+    }
+
+    setupSearchInput() {
+        console.log('🔧 Setting up enhanced search input...');
+        
+        // Method 1: Direct event listeners
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            console.log('✅ Search input element found, adding direct listeners');
+            
+            // Remove any existing listeners first
+            searchInput.removeEventListener('input', this.handleSearchInput);
+            searchInput.removeEventListener('keyup', this.handleSearchInput);
+            searchInput.removeEventListener('paste', this.handleSearchInput);
+            
+            // Add new listeners
+            searchInput.addEventListener('input', this.handleSearchInput.bind(this));
+            searchInput.addEventListener('keyup', this.handleSearchInput.bind(this));
+            searchInput.addEventListener('paste', this.handleSearchInput.bind(this));
+        } else {
+            console.error('❌ Search input element not found!');
+        }
+        
+        // Method 2: Event delegation (backup)
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'search-input') {
+                console.log('🔍 Search input via delegation:', e.target.value);
+                this.handleSearchInput({ target: e.target });
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.target && e.target.id === 'search-input') {
+                console.log('⌨️ Search keyup via delegation:', e.target.value);
+                this.handleSearchInput({ target: e.target });
+            }
+        });
+        
+        // Method 3: MutationObserver for dynamic content
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput && !searchInput.hasAttribute('data-listener-added')) {
+                        console.log('🔄 Re-adding search listeners after DOM change');
+                        searchInput.setAttribute('data-listener-added', 'true');
+                        searchInput.addEventListener('input', this.handleSearchInput.bind(this));
+                        searchInput.addEventListener('keyup', this.handleSearchInput.bind(this));
+                        searchInput.addEventListener('paste', this.handleSearchInput.bind(this));
+                    }
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    handleSearchInput(e) {
+        const value = e.target.value;
+        console.log('🔍 Search input handler triggered:', value);
+        
+        this.filters.search = value.trim().toLowerCase();
+        this.applyFilters();
+    }
+
+    // Polling method as ultimate fallback
+    startSearchPolling() {
+        console.log('🔄 Starting search input polling...');
+        let lastValue = '';
+        
+        setInterval(() => {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput && searchInput.value !== lastValue) {
+                console.log('🔄 Polling detected change:', searchInput.value);
+                lastValue = searchInput.value;
+                this.filters.search = searchInput.value.trim().toLowerCase();
+                this.applyFilters();
+            }
+        }, 100); // Check every 100ms
     }
 
     // Test function for search functionality
