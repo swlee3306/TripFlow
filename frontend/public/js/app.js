@@ -406,11 +406,24 @@ class TripFlowViewer {
                 filtered = filtered.filter(file => {
                     const fileName = file.name;
                     const matches = searchTerms.every(term => {
-                        const isMatch = fileName.includes(term);
+                        // Multiple search strategies
+                        const exactMatch = fileName.includes(term);
+                        const lowerMatch = fileName.toLowerCase().includes(term.toLowerCase());
+                        const trimmedMatch = fileName.trim().includes(term.trim());
+                        
+                        const isMatch = exactMatch || lowerMatch || trimmedMatch;
+                        
                         if (isMatch) {
                             console.log('✅ Match found:', file.name, 'for term:', term);
+                            console.log('  - Exact match:', exactMatch);
+                            console.log('  - Lower match:', lowerMatch);
+                            console.log('  - Trimmed match:', trimmedMatch);
                         } else {
                             console.log('❌ No match:', file.name, 'for term:', term);
+                            console.log('  - File name length:', fileName.length);
+                            console.log('  - Term length:', term.length);
+                            console.log('  - File name chars:', fileName.split('').map(c => c.charCodeAt(0)));
+                            console.log('  - Term chars:', term.split('').map(c => c.charCodeAt(0)));
                         }
                         return isMatch;
                     });
