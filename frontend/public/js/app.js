@@ -797,9 +797,21 @@ class TripFlowViewer {
     }
 }
 
-// Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Multiple initialization methods for maximum compatibility
+function initializeApp() {
     try {
+        console.log('🚀 Initializing TripFlow Viewer...');
+        
+        // Check if search input exists
+        const searchInput = document.getElementById('search-input');
+        console.log('🔍 Search input element:', searchInput);
+        
+        if (!searchInput) {
+            console.error('❌ Search input not found! Retrying in 100ms...');
+            setTimeout(initializeApp, 100);
+            return;
+        }
+        
         window.tripFlowViewer = new TripFlowViewer();
         
         // Add test functions to global scope for testing
@@ -827,9 +839,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
-        console.log('🚀 TripFlow Viewer initialized');
-        console.log('🧪 Run testSearch() in console to test search functionality');
+        // Test search input immediately
+        window.testSearchInput = () => {
+            const searchInput = document.getElementById('search-input');
+            console.log('🔍 Search input test:');
+            console.log('  - Element exists:', !!searchInput);
+            console.log('  - Element value:', searchInput?.value);
+            console.log('  - Event listeners:', searchInput?.getAttribute('data-listener-added'));
+            
+            if (searchInput) {
+                searchInput.value = 'test';
+                const event = new Event('input', { bubbles: true });
+                searchInput.dispatchEvent(event);
+                console.log('  - Event dispatched');
+            }
+        };
+        
+        console.log('✅ TripFlow Viewer initialized successfully');
+        console.log('🧪 Available test functions:');
+        console.log('  - testSearch() - Basic search test');
+        console.log('  - testKorean() - Korean search test');
+        console.log('  - testAll() - All tests');
+        console.log('  - debugSearch("term") - Debug specific search');
+        console.log('  - testSearchInput() - Test input element');
+        
     } catch (error) {
-        console.error('TripFlow Viewer initialization error:', error);
+        console.error('❌ TripFlow Viewer initialization error:', error);
+        console.log('🔄 Retrying initialization in 500ms...');
+        setTimeout(initializeApp, 500);
     }
-});
+}
+
+// Multiple initialization triggers
+document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('load', initializeApp);
+
+// Immediate initialization if DOM is already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}
