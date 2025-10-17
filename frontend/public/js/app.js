@@ -400,13 +400,16 @@ class TripFlowViewer {
         if (this.filters.search && this.filters.search.trim().length > 0) {
             const searchTerms = this.filters.search.trim().split(' ').filter(term => term.length > 0);
             console.log('🔎 Search terms:', searchTerms);
+            console.log('🔍 All files for search:', this.markdownFiles.map(f => f.name));
             
             if (searchTerms.length > 0) {
                 filtered = filtered.filter(file => {
-                    const fileName = file.name.toLowerCase();
-                    const matches = searchTerms.every(term => fileName.includes(term.toLowerCase()));
+                    const fileName = file.name;
+                    const matches = searchTerms.every(term => fileName.includes(term));
                     if (matches) {
                         console.log('✅ Match found:', file.name);
+                    } else {
+                        console.log('❌ No match:', file.name, 'for term:', term);
                     }
                     return matches;
                 });
