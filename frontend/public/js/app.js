@@ -173,8 +173,17 @@ class TripFlowViewer {
         console.log('🎯 RENDER START - filteredFiles:', this.filteredFiles.length);
         console.log('🎯 RENDER START - markdownFiles:', this.markdownFiles.length);
 
-        // Use filtered files for rendering
-        const filesToRender = this.filteredFiles.length > 0 ? this.filteredFiles : this.markdownFiles;
+        // Use filtered files for rendering - but only if search is active
+        let filesToRender;
+        if (this.filters.search && this.filters.search.trim().length > 0) {
+            // Search is active - use filtered results (even if empty)
+            filesToRender = this.filteredFiles;
+            console.log('🎯 SEARCH ACTIVE - using filteredFiles:', filesToRender.length);
+        } else {
+            // No search - use all files
+            filesToRender = this.markdownFiles;
+            console.log('🎯 NO SEARCH - using markdownFiles:', filesToRender.length);
+        }
         console.log('🎯 FILES TO RENDER:', filesToRender.length);
         console.log('🎯 FILES TO RENDER CONTENT:', filesToRender.map(f => f.name));
 
