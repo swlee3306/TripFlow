@@ -565,25 +565,45 @@ class TripFlowViewer {
     testSearchFunctionality() {
         console.log('🧪 Testing search functionality...');
         
-        // Test with sample data
+        // Test with sample data including Korean files
         const testFiles = [
             { name: 'my-trip-plan.md', size: 1024 },
             { name: 'vacation-notes.txt', size: 512 },
             { name: 'travel-guide.md', size: 2048 },
             { name: 'hotel-booking.txt', size: 256 },
-            { name: 'flight-details.md', size: 1536 }
+            { name: 'flight-details.md', size: 1536 },
+            { name: '여행계획서.md', size: 1024 },
+            { name: '호텔예약.txt', size: 512 },
+            { name: '항공편정보.md', size: 2048 },
+            { name: '맛집리스트.txt', size: 256 },
+            { name: '관광지가이드.md', size: 1536 }
         ];
         
         console.log('📁 Test files:', testFiles);
         
-        // Test search scenarios
+        // Comprehensive test scenarios including Korean
         const testCases = [
+            // English tests
             { search: 'trip', expected: ['my-trip-plan.md'] },
-            { search: 'md', expected: ['my-trip-plan.md', 'travel-guide.md', 'flight-details.md'] },
-            { search: 'txt', expected: ['vacation-notes.txt', 'hotel-booking.txt'] },
+            { search: 'md', expected: ['my-trip-plan.md', 'travel-guide.md', 'flight-details.md', '여행계획서.md', '항공편정보.md', '관광지가이드.md'] },
+            { search: 'txt', expected: ['vacation-notes.txt', 'hotel-booking.txt', '호텔예약.txt', '맛집리스트.txt'] },
             { search: 'travel guide', expected: ['travel-guide.md'] },
             { search: 'hotel booking', expected: ['hotel-booking.txt'] },
-            { search: 'xyz', expected: [] }
+            
+            // Korean tests
+            { search: '여행', expected: ['여행계획서.md'] },
+            { search: '호텔', expected: ['호텔예약.txt'] },
+            { search: '항공', expected: ['항공편정보.md'] },
+            { search: '맛집', expected: ['맛집리스트.txt'] },
+            { search: '관광', expected: ['관광지가이드.md'] },
+            
+            // Mixed language tests
+            { search: 'guide', expected: ['travel-guide.md', '관광지가이드.md'] },
+            { search: 'hotel', expected: ['hotel-booking.txt', '호텔예약.txt'] },
+            
+            // No results
+            { search: 'xyz', expected: [] },
+            { search: '존재하지않는파일', expected: [] }
         ];
         
         testCases.forEach((testCase, index) => {
@@ -593,13 +613,42 @@ class TripFlowViewer {
             const searchTerms = testCase.search.split(' ').filter(term => term.length > 0);
             const results = testFiles.filter(file => {
                 const fileName = file.name.toLowerCase();
-                return searchTerms.every(term => fileName.includes(term));
+                return searchTerms.every(term => fileName.includes(term.toLowerCase()));
             });
             
             console.log('Expected:', testCase.expected);
             console.log('Actual:', results.map(f => f.name));
             console.log('✅ Test passed:', JSON.stringify(results.map(f => f.name)) === JSON.stringify(testCase.expected));
         });
+    }
+
+    // Test Korean input specifically
+    testKoreanSearch() {
+        console.log('🇰🇷 Testing Korean search functionality...');
+        
+        // Simulate Korean input events
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            console.log('✅ Search input found, testing Korean input...');
+            
+            // Test Korean characters
+            const koreanTests = ['여행', '호텔', '항공', '맛집', '관광'];
+            
+            koreanTests.forEach((test, index) => {
+                console.log(`\n🇰🇷 Korean test ${index + 1}: "${test}"`);
+                
+                // Simulate input event
+                searchInput.value = test;
+                const event = new Event('input', { bubbles: true });
+                searchInput.dispatchEvent(event);
+                
+                // Check if filter was applied
+                console.log('Current filter search:', this.filters.search);
+                console.log('Input value:', searchInput.value);
+            });
+        } else {
+            console.error('❌ Search input not found for Korean testing');
+        }
     }
 
     showError(message) {
@@ -736,9 +785,19 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         window.tripFlowViewer = new TripFlowViewer();
         
-        // Add test function to global scope for testing
+        // Add test functions to global scope for testing
         window.testSearch = () => {
             window.tripFlowViewer.testSearchFunctionality();
+        };
+        
+        window.testKorean = () => {
+            window.tripFlowViewer.testKoreanSearch();
+        };
+        
+        window.testAll = () => {
+            console.log('🧪 Running all search tests...');
+            window.tripFlowViewer.testSearchFunctionality();
+            window.tripFlowViewer.testKoreanSearch();
         };
         
         console.log('🚀 TripFlow Viewer initialized');
