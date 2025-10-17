@@ -2,9 +2,16 @@
 class TripFlowViewer {
     constructor() {
         this.markdownFiles = [];
+        this.filteredFiles = [];
         this.currentFile = null;
         this.originalContent = null;
         this.isEditing = false;
+        this.filters = {
+            search: '',
+            type: 'all',
+            size: 'all',
+            sort: 'name'
+        };
         this.init();
     }
 
@@ -54,6 +61,47 @@ class TripFlowViewer {
             });
         }
 
+        // Search and filter functionality
+        const searchInput = document.getElementById('search-input');
+        const typeFilter = document.getElementById('type-filter');
+        const sizeFilter = document.getElementById('size-filter');
+        const sortFilter = document.getElementById('sort-filter');
+        const clearFilters = document.getElementById('clear-filters');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filters.search = e.target.value.toLowerCase();
+                this.applyFilters();
+            });
+        }
+
+        if (typeFilter) {
+            typeFilter.addEventListener('change', (e) => {
+                this.filters.type = e.target.value;
+                this.applyFilters();
+            });
+        }
+
+        if (sizeFilter) {
+            sizeFilter.addEventListener('change', (e) => {
+                this.filters.size = e.target.value;
+                this.applyFilters();
+            });
+        }
+
+        if (sortFilter) {
+            sortFilter.addEventListener('change', (e) => {
+                this.filters.sort = e.target.value;
+                this.applyFilters();
+            });
+        }
+
+        if (clearFilters) {
+            clearFilters.addEventListener('click', () => {
+                this.clearAllFilters();
+            });
+        }
+
         // Upload functionality
         const uploadBtn = document.getElementById('upload-btn');
         const fileInput = document.getElementById('file-input');
@@ -98,6 +146,7 @@ class TripFlowViewer {
             const response = await fetch('/api/files');
             if (response.ok) {
                 this.markdownFiles = await response.json();
+                this.filteredFiles = [];
                 this.renderFileList();
             } else {
                 this.showError('여행 계획 목록을 불러올 수 없습니다.');
@@ -110,14 +159,25 @@ class TripFlowViewer {
 
     renderFileList() {
         const fileList = document.getElementById('file-list');
+        const fileCount = document.getElementById('file-count');
         if (!fileList) return;
 
-        if (this.markdownFiles.length === 0) {
-            fileList.innerHTML = '<p class="text-gray-500 col-span-full">공유된 여행 계획이 없습니다.</p>';
+        // Use filtered files for rendering
+        const filesToRender = this.filteredFiles.length > 0 ? this.filteredFiles : this.markdownFiles;
+
+        if (filesToRender.length === 0) {
+            if (this.markdownFiles.length === 0) {
+                fileList.innerHTML = '<p class="text-gray-500 col-span-full">공유된 여행 계획이 없습니다.</p>';
+            } else {
+                fileList.innerHTML = '<p class="text-gray-500 col-span-full">검색 조건에 맞는 파일이 없습니다.</p>';
+            }
+            if (fileCount) fileCount.textContent = '0';
             return;
         }
 
-        fileList.innerHTML = this.markdownFiles.map(file => `
+        if (fileCount) fileCount.textContent = filesToRender.length;
+
+        fileList.innerHTML = filesToRender.map(file => `
             <div class="border rounded-lg p-4 hover:bg-gray-50">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center cursor-pointer" onclick="tripFlowViewer.openFile('${file.name}')">
@@ -307,6 +367,88 @@ class TripFlowViewer {
         document.body.removeChild(link);
         
         this.showSuccess(`파일 다운로드가 시작되었습니다: ${filename}`);
+    }
+
+    applyFilters() {
+        let filtered = [...this.markdownFiles];
+
+        // Search filter
+        if (this.filters.search) {
+            filtered = filtered.filter(file => 
+                file.name.toLowerCase().includes(this.filters.search)
+            );
+        }
+
+        // Type filter
+        if (this.filters.type !== 'all') {
+            filtered = filtered.filter(file => {
+                const extension = file.name.toLowerCase().split('.').pop();
+                if (this.filters.type === 'md') {
+                    return extension === 'md' || extension === 'markdown';
+                } else if (this.filters.type === 'txt') {
+                    return extension === 'txt';
+                }
+                return true;
+            });
+        }
+
+        // Size filter
+        if (this.filters.size !== 'all') {
+            filtered = filtered.filter(file => {
+                const size = file.size;
+                switch (this.filters.size) {
+                    case 'small':
+                        return size < 1024; // < 1KB
+                    case 'medium':
+                        return size >= 1024 && size < 102400; // 1KB - 100KB
+                    case 'large':
+                        return size >= 102400; // > 100KB
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Sort
+        filtered.sort((a, b) => {
+            switch (this.filters.sort) {
+                case 'name':
+                    return a.name.localeCompare(b.name);
+                case 'size':
+                    return b.size - a.size; // Descending order
+                case 'date':
+                    // Since we don't have date info in the current structure, use name as fallback
+                    return a.name.localeCompare(b.name);
+                default:
+                    return 0;
+            }
+        });
+
+        this.filteredFiles = filtered;
+        this.renderFileList();
+    }
+
+    clearAllFilters() {
+        this.filters = {
+            search: '',
+            type: 'all',
+            size: 'all',
+            sort: 'name'
+        };
+
+        // Reset UI elements
+        const searchInput = document.getElementById('search-input');
+        const typeFilter = document.getElementById('type-filter');
+        const sizeFilter = document.getElementById('size-filter');
+        const sortFilter = document.getElementById('sort-filter');
+
+        if (searchInput) searchInput.value = '';
+        if (typeFilter) typeFilter.value = 'all';
+        if (sizeFilter) sizeFilter.value = 'all';
+        if (sortFilter) sortFilter.value = 'name';
+
+        this.filteredFiles = [];
+        this.renderFileList();
     }
 
     showError(message) {

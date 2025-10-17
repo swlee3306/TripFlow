@@ -58,7 +58,66 @@
 
                <!-- File List Section -->
                <div class="bg-white rounded-lg shadow p-6 mb-8">
-                   <h2 class="text-xl font-semibold text-gray-900 mb-4">공유된 여행 계획</h2>
+                   <div class="flex justify-between items-center mb-6">
+                       <h2 class="text-xl font-semibold text-gray-900">공유된 여행 계획</h2>
+                       <div class="text-sm text-gray-500">
+                           <span id="file-count">0</span>개 파일
+                       </div>
+                   </div>
+                   
+                   <!-- Search and Filter Section -->
+                   <div class="mb-6 space-y-4">
+                       <!-- Search Bar -->
+                       <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                               <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                               </svg>
+                           </div>
+                           <input type="text" id="search-input" placeholder="파일명으로 검색..." 
+                                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                       </div>
+                       
+                       <!-- Filter Controls -->
+                       <div class="flex flex-wrap gap-4 items-center">
+                           <!-- File Type Filter -->
+                           <div class="flex items-center space-x-2">
+                               <label for="type-filter" class="text-sm font-medium text-gray-700">파일 타입:</label>
+                               <select id="type-filter" class="block w-32 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                   <option value="all">모든 파일</option>
+                                   <option value="md">마크다운</option>
+                                   <option value="txt">텍스트</option>
+                               </select>
+                           </div>
+                           
+                           <!-- File Size Filter -->
+                           <div class="flex items-center space-x-2">
+                               <label for="size-filter" class="text-sm font-medium text-gray-700">파일 크기:</label>
+                               <select id="size-filter" class="block w-32 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                   <option value="all">모든 크기</option>
+                                   <option value="small">작은 파일 (< 1KB)</option>
+                                   <option value="medium">중간 파일 (1KB - 100KB)</option>
+                                   <option value="large">큰 파일 (> 100KB)</option>
+                               </select>
+                           </div>
+                           
+                           <!-- Sort Options -->
+                           <div class="flex items-center space-x-2">
+                               <label for="sort-filter" class="text-sm font-medium text-gray-700">정렬:</label>
+                               <select id="sort-filter" class="block w-32 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                   <option value="name">이름순</option>
+                                   <option value="size">크기순</option>
+                                   <option value="date">날짜순</option>
+                               </select>
+                           </div>
+                           
+                           <!-- Clear Filters Button -->
+                           <button id="clear-filters" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                               필터 초기화
+                           </button>
+                       </div>
+                   </div>
+                   
             <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Files will be loaded here -->
             </div>
