@@ -26,3 +26,16 @@ node_modules/
 .cursor
 .taskmaster
 .env.example
+
+# Build artifacts
+main
+index
+test-build
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+test-*.md
+test-*.txt
