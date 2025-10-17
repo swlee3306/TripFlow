@@ -405,12 +405,15 @@ class TripFlowViewer {
             if (searchTerms.length > 0) {
                 filtered = filtered.filter(file => {
                     const fileName = file.name;
-                    const matches = searchTerms.every(term => fileName.includes(term));
-                    if (matches) {
-                        console.log('✅ Match found:', file.name);
-                    } else {
-                        console.log('❌ No match:', file.name, 'for term:', term);
-                    }
+                    const matches = searchTerms.every(term => {
+                        const isMatch = fileName.includes(term);
+                        if (isMatch) {
+                            console.log('✅ Match found:', file.name, 'for term:', term);
+                        } else {
+                            console.log('❌ No match:', file.name, 'for term:', term);
+                        }
+                        return isMatch;
+                    });
                     return matches;
                 });
                 console.log('📊 After search filter:', filtered.length);
