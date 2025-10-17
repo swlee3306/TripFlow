@@ -488,20 +488,35 @@ class TripFlowViewer {
     setupSearchInput() {
         console.log('🔧 Setting up enhanced search input...');
         
-        // Method 1: Direct event listeners
+        // Method 1: Direct event listeners with ALL possible events
         const searchInput = document.getElementById('search-input');
         if (searchInput) {
-            console.log('✅ Search input element found, adding direct listeners');
+            console.log('✅ Search input element found, adding comprehensive listeners');
             
             // Remove any existing listeners first
-            searchInput.removeEventListener('input', this.handleSearchInput);
-            searchInput.removeEventListener('keyup', this.handleSearchInput);
-            searchInput.removeEventListener('paste', this.handleSearchInput);
+            const events = ['input', 'keyup', 'keydown', 'keypress', 'paste', 'change', 'focus', 'blur'];
+            events.forEach(event => {
+                searchInput.removeEventListener(event, this.handleSearchInput);
+            });
             
-            // Add new listeners
-            searchInput.addEventListener('input', this.handleSearchInput.bind(this));
-            searchInput.addEventListener('keyup', this.handleSearchInput.bind(this));
-            searchInput.addEventListener('paste', this.handleSearchInput.bind(this));
+            // Add comprehensive listeners
+            events.forEach(event => {
+                searchInput.addEventListener(event, this.handleSearchInput.bind(this));
+            });
+            
+            // Additional Korean input support
+            searchInput.addEventListener('compositionstart', (e) => {
+                console.log('🇰🇷 Korean composition start');
+            });
+            
+            searchInput.addEventListener('compositionend', (e) => {
+                console.log('🇰🇷 Korean composition end:', e.target.value);
+                this.handleSearchInput(e);
+            });
+            
+            // Force focus and test
+            searchInput.focus();
+            console.log('🔍 Search input focused and ready');
         } else {
             console.error('❌ Search input element not found!');
         }
@@ -559,23 +574,42 @@ class TripFlowViewer {
 
     // Polling method as ultimate fallback
     startSearchPolling() {
-        console.log('🔄 Starting search input polling...');
+        console.log('🔄 Starting enhanced search input polling...');
         let lastValue = '';
+        let lastFocusState = false;
         
         setInterval(() => {
             const searchInput = document.getElementById('search-input');
-            if (searchInput && searchInput.value !== lastValue) {
-                console.log('🔄 Polling detected change:', searchInput.value);
-                lastValue = searchInput.value;
+            if (searchInput) {
+                const currentValue = searchInput.value;
+                const currentFocus = document.activeElement === searchInput;
                 
-                // 더 엄격한 검증
-                const trimmedValue = searchInput.value.trim();
-                this.filters.search = trimmedValue;
+                // Value change detection
+                if (currentValue !== lastValue) {
+                    console.log('🔄 Polling detected value change:', currentValue);
+                    lastValue = currentValue;
+                    
+                    const trimmedValue = currentValue.trim();
+                    this.filters.search = trimmedValue;
+                    
+                    console.log('🔄 Polling processed value:', trimmedValue);
+                    this.applyFilters();
+                }
                 
-                console.log('🔄 Polling processed value:', trimmedValue);
-                this.applyFilters();
+                // Focus state change detection
+                if (currentFocus !== lastFocusState) {
+                    console.log('🔄 Polling detected focus change:', currentFocus);
+                    lastFocusState = currentFocus;
+                }
+                
+                // Force trigger if input has value but no events fired
+                if (currentValue && currentValue.length > 0 && !this.filters.search) {
+                    console.log('🔄 Polling force trigger for value:', currentValue);
+                    this.filters.search = currentValue.trim();
+                    this.applyFilters();
+                }
             }
-        }, 100); // Check every 100ms
+        }, 50); // Check every 50ms for faster response
     }
 
     // Test function for search functionality
