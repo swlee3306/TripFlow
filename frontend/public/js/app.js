@@ -889,6 +889,43 @@ function initializeApp() {
             }
         };
         
+        // Real-time monitoring function
+        window.monitorSearch = () => {
+            console.log('🔍 Starting real-time search monitoring...');
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                // Monitor every keystroke
+                searchInput.addEventListener('input', (e) => {
+                    console.log('🎯 REAL INPUT EVENT:', e.target.value);
+                });
+                
+                searchInput.addEventListener('keydown', (e) => {
+                    console.log('⌨️ KEYDOWN EVENT:', e.key, e.target.value);
+                });
+                
+                searchInput.addEventListener('keyup', (e) => {
+                    console.log('⌨️ KEYUP EVENT:', e.key, e.target.value);
+                });
+                
+                console.log('✅ Monitoring started - now type in the search box!');
+            }
+        };
+        
+        // Force search function
+        window.forceSearch = (term) => {
+            console.log('🔧 Force search for:', term);
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = term;
+                // Trigger all possible events
+                ['input', 'keyup', 'change'].forEach(eventType => {
+                    const event = new Event(eventType, { bubbles: true });
+                    searchInput.dispatchEvent(event);
+                });
+                console.log('✅ All events triggered');
+            }
+        };
+        
         console.log('✅ TripFlow Viewer initialized successfully');
         console.log('🧪 Available test functions:');
         console.log('  - testSearch() - Basic search test');
@@ -896,6 +933,24 @@ function initializeApp() {
         console.log('  - testAll() - All tests');
         console.log('  - debugSearch("term") - Debug specific search');
         console.log('  - testSearchInput() - Test input element');
+        console.log('  - monitorSearch() - Monitor real-time typing');
+        console.log('  - forceSearch("term") - Force search with events');
+        
+        // Add direct event listener as last resort
+        setTimeout(() => {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                console.log('🔧 Adding direct event listener as last resort...');
+                searchInput.oninput = (e) => {
+                    console.log('🎯 DIRECT ONINPUT:', e.target.value);
+                    if (window.tripFlowViewer) {
+                        window.tripFlowViewer.filters.search = e.target.value.trim();
+                        window.tripFlowViewer.applyFilters();
+                    }
+                };
+                console.log('✅ Direct oninput listener added');
+            }
+        }, 1000);
         
     } catch (error) {
         console.error('❌ TripFlow Viewer initialization error:', error);
