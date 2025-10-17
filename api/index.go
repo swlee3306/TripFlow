@@ -152,6 +152,50 @@ func initRouter() {
 			c.String(200, content)
 		})
 
+		// Update markdown file content
+		api.PUT("/files/:filename", func(c *gin.Context) {
+			filename := c.Param("filename")
+			
+			// Security check: prevent directory traversal
+			if strings.Contains(filename, "..") || strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
+				c.JSON(400, gin.H{
+					"error": "Invalid filename",
+					"message": "잘못된 파일명입니다",
+				})
+				return
+			}
+
+			// Get content from request body
+			var requestBody struct {
+				Content string `json:"content"`
+			}
+
+			if err := c.ShouldBindJSON(&requestBody); err != nil {
+				c.JSON(400, gin.H{
+					"error": "Invalid request body",
+					"message": "요청 데이터가 올바르지 않습니다",
+				})
+				return
+			}
+
+			// Update file content in Redis
+			if err := saveMarkdownFile(filename, requestBody.Content, int64(len(requestBody.Content))); err != nil {
+				log.Printf("Failed to update file: %v", err)
+				c.JSON(500, gin.H{
+					"error": "Failed to update file",
+					"message": "파일 업데이트 중 오류가 발생했습니다",
+					"details": err.Error(),
+				})
+				return
+			}
+			
+			c.JSON(200, gin.H{
+				"success": true,
+				"filename": filename,
+				"message": "파일이 성공적으로 업데이트되었습니다",
+			})
+		})
+
 		// Delete markdown file
 		api.DELETE("/files/:filename", func(c *gin.Context) {
 			filename := c.Param("filename")
