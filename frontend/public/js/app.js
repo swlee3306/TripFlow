@@ -17,10 +17,20 @@ class TripFlowViewer {
 
     init() {
         this.loadFileList();
-        this.setupEventListeners();
+        
+        // Wait for DOM to be fully loaded before setting up event listeners
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.setupEventListeners();
+            });
+        } else {
+            this.setupEventListeners();
+        }
     }
 
     setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
+        
         const closeViewer = document.getElementById('close-viewer');
         if (closeViewer) {
             closeViewer.addEventListener('click', () => {
@@ -37,6 +47,23 @@ class TripFlowViewer {
                 }
             });
         }
+        
+        // Use event delegation for better reliability
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'search-input') {
+                console.log('🔍 Search input via delegation:', e.target.value);
+                this.filters.search = e.target.value.trim().toLowerCase();
+                this.applyFilters();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.target.id === 'search-input') {
+                console.log('⌨️ Search keyup via delegation:', e.target.value);
+                this.filters.search = e.target.value.trim().toLowerCase();
+                this.applyFilters();
+            }
+        });
 
         // Edit functionality
         const editBtn = document.getElementById('edit-btn');
@@ -62,18 +89,10 @@ class TripFlowViewer {
         }
 
         // Search and filter functionality
-        const searchInput = document.getElementById('search-input');
         const typeFilter = document.getElementById('type-filter');
         const sizeFilter = document.getElementById('size-filter');
         const sortFilter = document.getElementById('sort-filter');
         const clearFilters = document.getElementById('clear-filters');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filters.search = e.target.value.trim().toLowerCase();
-                this.applyFilters();
-            });
-        }
 
         if (typeFilter) {
             typeFilter.addEventListener('change', (e) => {
