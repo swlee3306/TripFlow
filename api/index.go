@@ -148,7 +148,18 @@ func initRouter() {
 				})
 				return
 			}
-			c.Header("Content-Type", "text/plain; charset=utf-8")
+			
+			// Check if this is a download request
+			download := c.Query("download")
+			if download == "true" {
+				// Set headers for file download
+				c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+				c.Header("Content-Type", "application/octet-stream")
+			} else {
+				// Set headers for viewing
+				c.Header("Content-Type", "text/plain; charset=utf-8")
+			}
+			
 			c.String(200, content)
 		})
 
