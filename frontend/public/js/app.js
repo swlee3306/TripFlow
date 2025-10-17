@@ -21,6 +21,16 @@ class TripFlowViewer {
             });
         }
 
+        // Download functionality
+        const downloadBtn = document.getElementById('download-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                if (this.currentFile) {
+                    this.downloadFile(this.currentFile);
+                }
+            });
+        }
+
         // Edit functionality
         const editBtn = document.getElementById('edit-btn');
         const saveBtn = document.getElementById('save-btn');
@@ -116,11 +126,18 @@ class TripFlowViewer {
                         </svg>
                         <h3 class="font-medium text-gray-900">${file.name}</h3>
                     </div>
-                    <button onclick="tripFlowViewer.deleteFile('${file.name}')" class="text-red-500 hover:text-red-700 p-1 rounded">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="tripFlowViewer.downloadFile('${file.name}')" class="text-green-500 hover:text-green-700 p-1 rounded" title="다운로드">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="tripFlowViewer.deleteFile('${file.name}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="삭제">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <p class="text-sm text-gray-500">${file.size} bytes</p>
                 <p class="text-xs text-gray-400 mt-1">클릭하여 여행 계획 보기</p>
@@ -272,6 +289,24 @@ class TripFlowViewer {
             console.error('Save error:', error);
             this.showError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
         }
+    }
+
+    downloadFile(filename) {
+        // Create a download link with the download parameter
+        const downloadUrl = `/api/files/${filename}?download=true`;
+        
+        // Create a temporary anchor element to trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        // Add to DOM, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showSuccess(`파일 다운로드가 시작되었습니다: ${filename}`);
     }
 
     showError(message) {
