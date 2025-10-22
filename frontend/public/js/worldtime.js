@@ -19,7 +19,7 @@ class WorldTimeDisplay {
             { name: '밴쿠버', timezone: 'America/Vancouver', country: '🇨🇦', flag: '🇨🇦' },
             { name: '상파울루', timezone: 'America/Sao_Paulo', country: '🇧🇷', flag: '🇧🇷' },
             { name: '두바이', timezone: 'Asia/Dubai', country: '🇦🇪', flag: '🇦🇪' },
-            { name: '뭄바이', timezone: 'Asia/Mumbai', country: '🇮🇳', flag: '🇮🇳' },
+            { name: '뭄바이', timezone: 'Asia/Kolkata', country: '🇮🇳', flag: '🇮🇳' },
             { name: '카이로', timezone: 'Africa/Cairo', country: '🇪🇬', flag: '🇪🇬' },
             { name: '요하네스버그', timezone: 'Africa/Johannesburg', country: '🇿🇦', flag: '🇿🇦' },
             { name: '오클랜드', timezone: 'Pacific/Auckland', country: '🇳🇿', flag: '🇳🇿' }
@@ -106,9 +106,40 @@ class WorldTimeDisplay {
                 const timezoneName = this.getTimezoneName(this.currentTimezone);
                 timezoneDisplay.textContent = timezoneName;
             }
+            
+            // Update analog clock hands
+            this.updateAnalogClock(timeInTimezone);
         } catch (error) {
             console.error('Error updating time:', error);
             this.showTimeError();
+        }
+    }
+
+    updateAnalogClock(date) {
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+        
+        // Calculate angles for clock hands
+        const hourAngle = (hours % 12) * 30 + (minutes * 0.5); // 30 degrees per hour + minute adjustment
+        const minuteAngle = minutes * 6; // 6 degrees per minute
+        const secondAngle = seconds * 6; // 6 degrees per second
+        
+        // Update clock hands
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const secondHand = document.getElementById('second-hand');
+        
+        if (hourHand) {
+            hourHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${hourAngle}deg)`;
+        }
+        
+        if (minuteHand) {
+            minuteHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${minuteAngle}deg)`;
+        }
+        
+        if (secondHand) {
+            secondHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${secondAngle}deg)`;
         }
     }
 
@@ -163,7 +194,7 @@ class WorldTimeDisplay {
 
         container.innerHTML = this.majorCities.map(city => `
             <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors" data-timezone="${city.timezone}">
-                <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center">
                         <span class="text-2xl mr-2">${city.flag}</span>
                         <div>
@@ -174,6 +205,32 @@ class WorldTimeDisplay {
                     <div class="text-right">
                         <div class="font-bold text-lg" data-time="${city.timezone}">--:--:--</div>
                         <div class="text-sm text-gray-500" data-date="${city.timezone}">--월 --일</div>
+                    </div>
+                </div>
+                <!-- Mini Analog Clock -->
+                <div class="flex justify-center">
+                    <div class="relative w-16 h-16">
+                        <div class="absolute inset-0 rounded-full border-2 border-gray-300 bg-white shadow-sm">
+                            <!-- Mini Clock Numbers -->
+                            <div class="absolute inset-0">
+                                <div class="absolute top-0.5 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600">12</div>
+                                <div class="absolute right-0.5 top-1/2 transform -translate-y-1/2 text-xs font-bold text-gray-600">3</div>
+                                <div class="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600">6</div>
+                                <div class="absolute left-0.5 top-1/2 transform -translate-y-1/2 text-xs font-bold text-gray-600">9</div>
+                            </div>
+                            
+                            <!-- Mini Clock Hands -->
+                            <div class="absolute inset-0">
+                                <!-- Hour Hand -->
+                                <div class="absolute w-0.5 h-6 bg-gray-700 rounded-full origin-bottom" data-hour-hand="${city.timezone}" style="transform-origin: bottom center; left: 50%; top: 50%; transform: translateX(-50%) translateY(-100%) rotate(0deg);"></div>
+                                <!-- Minute Hand -->
+                                <div class="absolute w-0.5 h-8 bg-gray-500 rounded-full origin-bottom" data-minute-hand="${city.timezone}" style="transform-origin: bottom center; left: 50%; top: 50%; transform: translateX(-50%) translateY(-100%) rotate(0deg);"></div>
+                                <!-- Second Hand -->
+                                <div class="absolute w-px h-8 bg-red-400 rounded-full origin-bottom" data-second-hand="${city.timezone}" style="transform-origin: bottom center; left: 50%; top: 50%; transform: translateX(-50%) translateY(-100%) rotate(0deg);"></div>
+                                <!-- Center Dot -->
+                                <div class="absolute w-1 h-1 bg-gray-700 rounded-full" style="left: 50%; top: 50%; transform: translate(-50%, -50%);"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -216,10 +273,41 @@ class WorldTimeDisplay {
                         day: 'numeric'
                     });
                 }
+                
+                // Update mini analog clock for this city
+                this.updateMiniClock(city.timezone, timeInCity);
             } catch (error) {
                 console.error(`Error updating time for ${city.name}:`, error);
             }
         });
+    }
+
+    updateMiniClock(timezone, date) {
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+        
+        // Calculate angles for mini clock hands
+        const hourAngle = (hours % 12) * 30 + (minutes * 0.5);
+        const minuteAngle = minutes * 6;
+        const secondAngle = seconds * 6;
+        
+        // Update mini clock hands
+        const hourHand = document.querySelector(`[data-hour-hand="${timezone}"]`);
+        const minuteHand = document.querySelector(`[data-minute-hand="${timezone}"]`);
+        const secondHand = document.querySelector(`[data-second-hand="${timezone}"]`);
+        
+        if (hourHand) {
+            hourHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${hourAngle}deg)`;
+        }
+        
+        if (minuteHand) {
+            minuteHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${minuteAngle}deg)`;
+        }
+        
+        if (secondHand) {
+            secondHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${secondAngle}deg)`;
+        }
     }
 
     // Utility function to format time with timezone

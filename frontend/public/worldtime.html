@@ -45,16 +45,71 @@
 
         <!-- Current Time Display -->
         <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <div class="text-center">
-                <div class="text-4xl font-bold text-gray-900 mb-2" id="current-time">
-                    <i class="fas fa-clock mr-2 text-blue-600"></i>
-                    <span id="time-display">--:--:--</span>
+            <div class="flex flex-col lg:flex-row items-center justify-between">
+                <!-- Analog Clock -->
+                <div class="mb-6 lg:mb-0 lg:mr-8">
+                    <div class="relative w-48 h-48 mx-auto">
+                        <!-- Clock Face -->
+                        <div class="absolute inset-0 rounded-full border-4 border-gray-300 bg-white shadow-lg">
+                            <!-- Clock Numbers -->
+                            <div class="absolute inset-0">
+                                <!-- 12 -->
+                                <div class="absolute top-2 left-1/2 transform -translate-x-1/2 text-lg font-bold text-gray-800">12</div>
+                                <!-- 3 -->
+                                <div class="absolute right-2 top-1/2 transform -translate-y-1/2 text-lg font-bold text-gray-800">3</div>
+                                <!-- 6 -->
+                                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-lg font-bold text-gray-800">6</div>
+                                <!-- 9 -->
+                                <div class="absolute left-2 top-1/2 transform -translate-y-1/2 text-lg font-bold text-gray-800">9</div>
+                                
+                                <!-- Hour marks -->
+                                <div class="absolute inset-0">
+                                    <!-- 1 -->
+                                    <div class="absolute top-6 right-16 text-sm font-semibold text-gray-600">1</div>
+                                    <!-- 2 -->
+                                    <div class="absolute top-12 right-8 text-sm font-semibold text-gray-600">2</div>
+                                    <!-- 4 -->
+                                    <div class="absolute bottom-12 right-8 text-sm font-semibold text-gray-600">4</div>
+                                    <!-- 5 -->
+                                    <div class="absolute bottom-6 right-16 text-sm font-semibold text-gray-600">5</div>
+                                    <!-- 7 -->
+                                    <div class="absolute bottom-6 left-16 text-sm font-semibold text-gray-600">7</div>
+                                    <!-- 8 -->
+                                    <div class="absolute bottom-12 left-8 text-sm font-semibold text-gray-600">8</div>
+                                    <!-- 10 -->
+                                    <div class="absolute top-12 left-8 text-sm font-semibold text-gray-600">10</div>
+                                    <!-- 11 -->
+                                    <div class="absolute top-6 left-16 text-sm font-semibold text-gray-600">11</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Clock Hands -->
+                            <div class="absolute inset-0">
+                                <!-- Hour Hand -->
+                                <div id="hour-hand" class="absolute w-1 h-16 bg-gray-800 rounded-full origin-bottom" style="transform-origin: bottom center; left: 50%; top: 50%; transform: translateX(-50%) translateY(-100%) rotate(0deg);"></div>
+                                <!-- Minute Hand -->
+                                <div id="minute-hand" class="absolute w-1 h-20 bg-gray-600 rounded-full origin-bottom" style="transform-origin: bottom center; left: 50%; top: 50%; transform: translateX(-50%) translateY(-100%) rotate(0deg);"></div>
+                                <!-- Second Hand -->
+                                <div id="second-hand" class="absolute w-0.5 h-20 bg-red-500 rounded-full origin-bottom" style="transform-origin: bottom center; left: 50%; top: 50%; transform: translateX(-50%) translateY(-100%) rotate(0deg);"></div>
+                                <!-- Center Dot -->
+                                <div class="absolute w-3 h-3 bg-gray-800 rounded-full" style="left: 50%; top: 50%; transform: translate(-50%, -50%);"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-lg text-gray-600" id="current-date">
-                    <span id="date-display">----년 --월 --일</span>
-                </div>
-                <div class="text-sm text-gray-500 mt-2" id="timezone-info">
-                    <span id="timezone-display">대한민국 표준시 (KST)</span>
+                
+                <!-- Digital Time Display -->
+                <div class="text-center lg:text-left">
+                    <div class="text-4xl font-bold text-gray-900 mb-2" id="current-time">
+                        <i class="fas fa-clock mr-2 text-blue-600"></i>
+                        <span id="time-display">--:--:--</span>
+                    </div>
+                    <div class="text-lg text-gray-600" id="current-date">
+                        <span id="date-display">----년 --월 --일</span>
+                    </div>
+                    <div class="text-sm text-gray-500 mt-2" id="timezone-info">
+                        <span id="timezone-display">대한민국 표준시 (KST)</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,7 +137,7 @@
                         <option value="America/Vancouver">🇨🇦 밴쿠버 (PST/PDT)</option>
                         <option value="America/Sao_Paulo">🇧🇷 상파울루 (BRT)</option>
                         <option value="Asia/Dubai">🇦🇪 두바이 (GST)</option>
-                        <option value="Asia/Mumbai">🇮🇳 뭄바이 (IST)</option>
+                        <option value="Asia/Kolkata">🇮🇳 뭄바이 (IST)</option>
                         <option value="Africa/Cairo">🇪🇬 카이로 (EET)</option>
                         <option value="Africa/Johannesburg">🇿🇦 요하네스버그 (SAST)</option>
                         <option value="Pacific/Auckland">🇳🇿 오클랜드 (NZST/NZDT)</option>
