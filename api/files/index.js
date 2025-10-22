@@ -28,8 +28,8 @@ export default async function handler(req, res) {
         const files = JSON.parse(fileList);
         // Transform to match Go server format
         const result = files.map(file => ({
-          name: file.Filename || file.name,
-          size: file.Size || file.size || 0
+          name: file.filename || file.Filename || file.name || 'unknown',
+          size: file.size || file.Size || 0
         }));
         res.status(200).json(result);
       } else {

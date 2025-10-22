@@ -154,8 +154,12 @@ class TripFlowViewer {
             const response = await fetch('/api/files');
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 API Response data:', JSON.stringify(data, null, 2));
+                
                 // Ensure data is an array
                 this.markdownFiles = Array.isArray(data) ? data : [];
+                console.log('🔍 Processed markdownFiles:', JSON.stringify(this.markdownFiles, null, 2));
+                
                 this.filteredFiles = [];
                 this.renderFileList();
             } else {
