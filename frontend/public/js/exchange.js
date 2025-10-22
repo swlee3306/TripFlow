@@ -65,7 +65,7 @@ class ExchangeCalculator {
         
         try {
             // Using our backend API to avoid CORS issues
-            const response = await fetch('/api/exchange/rates?base=KRW');
+            const response = await fetch('http://localhost:8080/api/exchange/rates?base=KRW');
             
             if (!response.ok) {
                 throw new Error('Failed to fetch exchange rates');
