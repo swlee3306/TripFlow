@@ -10,10 +10,6 @@
       "dest": "/api/exchange/convert.js"
     },
     {
-      "src": "/api/expenses",
-      "dest": "/api/expenses/index.js"
-    },
-    {
       "src": "/api/expenses/budget",
       "dest": "/api/expenses/budget.js"
     },
@@ -22,16 +18,20 @@
       "dest": "/api/expenses/stats.js"
     },
     {
+      "src": "/api/expenses/([^/]+)",
+      "dest": "/api/expenses/[id].js"
+    },
+    {
+      "src": "/api/expenses",
+      "dest": "/api/expenses/index.js"
+    },
+    {
       "src": "/api/files",
       "dest": "/api/files/index.js"
     },
     {
       "src": "/api/files/by-id",
       "dest": "/api/files/by-id.js"
-    },
-    {
-      "src": "/api/expenses/([^/]+)",
-      "dest": "/api/expenses/[id].js"
     },
     {
       "src": "/api/files/(.+)",

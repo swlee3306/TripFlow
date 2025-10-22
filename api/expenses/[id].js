@@ -13,10 +13,17 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('🔍 DELETE request received:', req.method);
+    console.log('🔍 Query params:', req.query);
+    console.log('🔍 URL:', req.url);
+    
     if (req.method === 'DELETE') {
       const { id } = req.query;
       
+      console.log('🔍 Expense ID from query:', id);
+      
       if (!id) {
+        console.log('❌ Missing expense ID');
         res.status(400).json({ error: 'Missing expense ID' });
         return;
       }

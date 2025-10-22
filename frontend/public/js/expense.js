@@ -221,7 +221,9 @@ class ExpenseTracker {
                 this.updateCharts();
                 this.showSuccess('지출이 삭제되었습니다.');
             } else {
-                throw new Error('Failed to delete expense');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ Delete failed:', response.status, response.statusText, errorData);
+                throw new Error(`Failed to delete expense: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
             console.error('Error deleting expense:', error);
