@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,16 +13,101 @@ import (
 
 // Expense represents a single expense entry
 type Expense struct {
-	ID          string    `json:"id"`
-	Amount      float64   `json:"amount"`
-	Category    string    `json:"category"`
-	Description string    `json:"description"`
-	Date        time.Time `json:"date"`
+	ID               string    `json:"id"`
+	Amount           float64   `json:"amount"`
+	OriginalAmount   float64   `json:"originalAmount"`
+	OriginalCurrency string    `json:"originalCurrency"`
+	Category         string    `json:"category"`
+	Description      string    `json:"description"`
+	Date             time.Time `json:"date"`
 }
 
 // Budget represents the total budget
 type Budget struct {
 	Amount float64 `json:"budget"`
+}
+
+// Global Redis client for serverless optimization
+var redisClient *redis.Client
+
+// initRedis initializes Redis Cloud client
+func initRedis() {
+	redisURL := "redis://default:27MKL27G0P2cVEUvV7WShJOMnbgtIbtK@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
+	
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		fmt.Printf("Failed to parse Redis URL: %v", err)
+		return
+	}
+	
+	redisClient = redis.NewClient(opt)
+	
+	// Test connection
+	ctx := context.Background()
+	_, err = redisClient.Ping(ctx).Result()
+	if err != nil {
+		fmt.Printf("Failed to connect to Redis: %v", err)
+		redisClient = nil
+	} else {
+		fmt.Printf("Redis Cloud connected successfully")
+	}
+}
+
+// kvGet retrieves a value from Redis Cloud
+func kvGet(key string) (string, error) {
+	if redisClient == nil {
+		initRedis()
+		if redisClient == nil {
+			return "", fmt.Errorf("Redis not configured")
+		}
+	}
+
+	ctx := context.Background()
+	val, err := redisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", fmt.Errorf("key not found")
+	}
+	if err != nil {
+		return "", err
+	}
+
+	return val, nil
+}
+
+// kvSet stores a value in Redis Cloud
+func kvSet(key, value string) error {
+	if redisClient == nil {
+		initRedis()
+		if redisClient == nil {
+			return fmt.Errorf("Redis not configured")
+		}
+	}
+
+	ctx := context.Background()
+	err := redisClient.Set(ctx, key, value, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// kvDelete deletes a key from Redis Cloud
+func kvDelete(key string) error {
+	if redisClient == nil {
+		initRedis()
+		if redisClient == nil {
+			return fmt.Errorf("Redis not configured")
+		}
+	}
+
+	ctx := context.Background()
+	err := redisClient.Del(ctx, key).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ExpenseHandler handles expense-related requests
@@ -31,37 +117,32 @@ type ExpenseHandler struct {
 
 // NewExpenseHandler creates a new ExpenseHandler
 func NewExpenseHandler(redisClient *redis.Client) *ExpenseHandler {
+	// Initialize Redis Cloud connection
+	initRedis()
+	
 	return &ExpenseHandler{
 		redisClient: redisClient,
 	}
 }
 
-// GetExpenses retrieves all expenses from Redis
+// GetExpenses retrieves all expenses from Redis Cloud
 func (h *ExpenseHandler) GetExpenses(c *gin.Context) {
-	ctx := c.Request.Context()
-	
-	// Get all expense keys
-	keys, err := h.redisClient.Keys(ctx, "expense:*").Result()
+	// Get expenses list from Redis Cloud
+	expensesList, err := kvGet("expenses:list")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve expenses: %v", err),
+		// If no expenses exist, return empty list
+		c.JSON(http.StatusOK, gin.H{
+			"expenses": []Expense{},
 		})
 		return
 	}
 
 	var expenses []Expense
-	for _, key := range keys {
-		expenseData, err := h.redisClient.Get(ctx, key).Result()
-		if err != nil {
-			continue // Skip invalid entries
-		}
-
-		var expense Expense
-		if err := json.Unmarshal([]byte(expenseData), &expense); err != nil {
-			continue // Skip invalid JSON
-		}
-
-		expenses = append(expenses, expense)
+	if err := json.Unmarshal([]byte(expensesList), &expenses); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to parse expenses: %v", err),
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -69,7 +150,7 @@ func (h *ExpenseHandler) GetExpenses(c *gin.Context) {
 	})
 }
 
-// AddExpense adds a new expense to Redis
+// AddExpense adds a new expense to Redis Cloud
 func (h *ExpenseHandler) AddExpense(c *gin.Context) {
 	var expense Expense
 	if err := c.ShouldBindJSON(&expense); err != nil {
@@ -111,21 +192,30 @@ func (h *ExpenseHandler) AddExpense(c *gin.Context) {
 		return
 	}
 
-	// Store expense in Redis
-	ctx := c.Request.Context()
-	expenseData, err := json.Marshal(expense)
+	// Get existing expenses list
+	expensesList, err := kvGet("expenses:list")
+	var expenses []Expense
+	if err == nil && expensesList != "" {
+		if err := json.Unmarshal([]byte(expensesList), &expenses); err != nil {
+			expenses = []Expense{}
+		}
+	}
+
+	// Add new expense
+	expenses = append(expenses, expense)
+
+	// Save updated expenses list
+	expensesData, err := json.Marshal(expenses)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to serialize expense: %v", err),
+			"error": fmt.Sprintf("Failed to serialize expenses: %v", err),
 		})
 		return
 	}
 
-	key := fmt.Sprintf("expense:%s", expense.ID)
-	err = h.redisClient.Set(ctx, key, expenseData, 0).Err()
-	if err != nil {
+	if err := kvSet("expenses:list", string(expensesData)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to store expense: %v", err),
+			"error": fmt.Sprintf("Failed to store expenses: %v", err),
 		})
 		return
 	}
@@ -136,7 +226,7 @@ func (h *ExpenseHandler) AddExpense(c *gin.Context) {
 	})
 }
 
-// DeleteExpense removes an expense from Redis
+// DeleteExpense removes an expense from Redis Cloud
 func (h *ExpenseHandler) DeleteExpense(c *gin.Context) {
 	expenseID := c.Param("id")
 	if expenseID == "" {
@@ -146,28 +236,53 @@ func (h *ExpenseHandler) DeleteExpense(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-	key := fmt.Sprintf("expense:%s", expenseID)
-	
-	// Check if expense exists
-	_, err := h.redisClient.Get(ctx, key).Result()
-	if err == redis.Nil {
+	// Get existing expenses list
+	expensesList, err := kvGet("expenses:list")
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Expense not found",
-		})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to check expense: %v", err),
+			"error": "No expenses found",
 		})
 		return
 	}
 
-	// Delete expense
-	err = h.redisClient.Del(ctx, key).Err()
+	var expenses []Expense
+	if err := json.Unmarshal([]byte(expensesList), &expenses); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to parse expenses: %v", err),
+		})
+		return
+	}
+
+	// Find and remove expense
+	var updatedExpenses []Expense
+	found := false
+	for _, expense := range expenses {
+		if expense.ID != expenseID {
+			updatedExpenses = append(updatedExpenses, expense)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Expense not found",
+		})
+		return
+	}
+
+	// Save updated expenses list
+	expensesData, err := json.Marshal(updatedExpenses)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to delete expense: %v", err),
+			"error": fmt.Sprintf("Failed to serialize expenses: %v", err),
+		})
+		return
+	}
+
+	if err := kvSet("expenses:list", string(expensesData)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to update expenses: %v", err),
 		})
 		return
 	}
@@ -177,20 +292,13 @@ func (h *ExpenseHandler) DeleteExpense(c *gin.Context) {
 	})
 }
 
-// GetBudget retrieves the current budget from Redis
+// GetBudget retrieves the current budget from Redis Cloud
 func (h *ExpenseHandler) GetBudget(c *gin.Context) {
-	ctx := c.Request.Context()
-	
-	budgetData, err := h.redisClient.Get(ctx, "budget").Result()
-	if err == redis.Nil {
+	budgetData, err := kvGet("budget")
+	if err != nil {
 		// No budget set
 		c.JSON(http.StatusOK, gin.H{
 			"budget": 0,
-		})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve budget: %v", err),
 		})
 		return
 	}
@@ -206,7 +314,7 @@ func (h *ExpenseHandler) GetBudget(c *gin.Context) {
 	c.JSON(http.StatusOK, budget)
 }
 
-// SetBudget sets the budget in Redis
+// SetBudget sets the budget in Redis Cloud
 func (h *ExpenseHandler) SetBudget(c *gin.Context) {
 	var budget Budget
 	if err := c.ShouldBindJSON(&budget); err != nil {
@@ -223,7 +331,6 @@ func (h *ExpenseHandler) SetBudget(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	budgetData, err := json.Marshal(budget)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -232,8 +339,7 @@ func (h *ExpenseHandler) SetBudget(c *gin.Context) {
 		return
 	}
 
-	err = h.redisClient.Set(ctx, "budget", budgetData, 0).Err()
-	if err != nil {
+	if err := kvSet("budget", string(budgetData)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to store budget: %v", err),
 		})
@@ -246,39 +352,27 @@ func (h *ExpenseHandler) SetBudget(c *gin.Context) {
 	})
 }
 
-// GetExpenseStats retrieves expense statistics
+// GetExpenseStats retrieves expense statistics from Redis Cloud
 func (h *ExpenseHandler) GetExpenseStats(c *gin.Context) {
-	ctx := c.Request.Context()
-	
-	// Get all expenses
-	keys, err := h.redisClient.Keys(ctx, "expense:*").Result()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to retrieve expenses: %v", err),
-		})
-		return
+	// Get expenses list
+	expensesList, err := kvGet("expenses:list")
+	var expenses []Expense
+	if err == nil && expensesList != "" {
+		if err := json.Unmarshal([]byte(expensesList), &expenses); err != nil {
+			expenses = []Expense{}
+		}
 	}
 
 	var totalSpent float64
 	categoryStats := make(map[string]float64)
 	
-	for _, key := range keys {
-		expenseData, err := h.redisClient.Get(ctx, key).Result()
-		if err != nil {
-			continue
-		}
-
-		var expense Expense
-		if err := json.Unmarshal([]byte(expenseData), &expense); err != nil {
-			continue
-		}
-
+	for _, expense := range expenses {
 		totalSpent += expense.Amount
 		categoryStats[expense.Category] += expense.Amount
 	}
 
 	// Get budget
-	budgetData, err := h.redisClient.Get(ctx, "budget").Result()
+	budgetData, err := kvGet("budget")
 	var budget float64
 	if err == nil {
 		var budgetObj Budget

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -66,12 +67,24 @@ func main() {
 		log.Fatalf("Failed to initialize file storage: %v", err)
 	}
 
-	// Initialize Redis client
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+	// Initialize Redis client (Redis Cloud)
+	redisURL := "redis://default:27MKL27G0P2cVEUvV7WShJOMnbgtIbtK@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
+	
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		log.Fatalf("Failed to parse Redis URL: %v", err)
+	}
+	
+	redisClient := redis.NewClient(opt)
+	
+	// Test Redis connection
+	ctx := context.Background()
+	_, err = redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Printf("Warning: Failed to connect to Redis Cloud: %v", err)
+	} else {
+		log.Printf("✅ Redis Cloud connected successfully")
+	}
 
 	// Initialize repositories
 	scheduleRepo := repositories.NewScheduleRepository(db)
