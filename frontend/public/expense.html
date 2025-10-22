@@ -98,17 +98,24 @@
                     <div class="flex space-x-2">
                         <input type="number" id="expense-amount" placeholder="0" 
                                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                        <select id="expense-currency" 
-                                class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="KRW">₩ KRW</option>
-                            <option value="USD">$ USD</option>
-                            <option value="EUR">€ EUR</option>
-                            <option value="JPY">¥ JPY</option>
-                            <option value="CNY">¥ CNY</option>
-                            <option value="GBP">£ GBP</option>
-                            <option value="AUD">$ AUD</option>
-                            <option value="CAD">$ CAD</option>
-                        </select>
+                        <div class="relative">
+                            <select id="expense-currency" 
+                                    class="px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white w-full">
+                                <option value="KRW">₩ KRW</option>
+                                <option value="USD">$ USD</option>
+                                <option value="EUR">€ EUR</option>
+                                <option value="JPY">¥ JPY</option>
+                                <option value="CNY">¥ CNY</option>
+                                <option value="GBP">£ GBP</option>
+                                <option value="AUD">$ AUD</option>
+                                <option value="CAD">$ CAD</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                     <div id="converted-amount" class="mt-2 text-sm text-gray-600 hidden">
                         <span class="font-medium">한국 원화: </span><span id="krw-amount">₩0</span>
