@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세계 시간 - TripFlow</title>
+    <meta name="description" content="세계 주요 도시의 현재 시간을 확인하세요">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23059669' d='M16 2L4 8v16l12 6 12-6V8L16 2z'/><path fill='%23ffffff' d='M12 14h8v4h-8z'/></svg>">
+    
+    <!-- Tailwind CSS -->
+    <link href="./css/output.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-900">TripFlow</h1>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">홈</a>
+                    <a href="/exchange.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">환율 계산기</a>
+                    <a href="/worldtime.html" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium">세계 시간</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">세계 시간</h2>
+            <p class="text-gray-600">세계 주요 도시의 현재 시간을 확인하세요</p>
+        </div>
+
+        <!-- Current Time Display -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <div class="text-center">
+                <div class="text-4xl font-bold text-gray-900 mb-2" id="current-time">
+                    <i class="fas fa-clock mr-2 text-blue-600"></i>
+                    <span id="time-display">--:--:--</span>
+                </div>
+                <div class="text-lg text-gray-600" id="current-date">
+                    <span id="date-display">----년 --월 --일</span>
+                </div>
+                <div class="text-sm text-gray-500 mt-2" id="timezone-info">
+                    <span id="timezone-display">대한민국 표준시 (KST)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Zone Selector -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">시간대 선택</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="timezone-select" class="block text-sm font-medium text-gray-700 mb-2">시간대 선택</label>
+                    <select id="timezone-select" class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Asia/Seoul">🇰🇷 서울 (KST)</option>
+                        <option value="America/New_York">🇺🇸 뉴욕 (EST/EDT)</option>
+                        <option value="America/Los_Angeles">🇺🇸 로스앤젤레스 (PST/PDT)</option>
+                        <option value="Europe/London">🇬🇧 런던 (GMT/BST)</option>
+                        <option value="Europe/Paris">🇫🇷 파리 (CET/CEST)</option>
+                        <option value="Europe/Berlin">🇩🇪 베를린 (CET/CEST)</option>
+                        <option value="Asia/Tokyo">🇯🇵 도쿄 (JST)</option>
+                        <option value="Asia/Shanghai">🇨🇳 상하이 (CST)</option>
+                        <option value="Asia/Hong_Kong">🇭🇰 홍콩 (HKT)</option>
+                        <option value="Asia/Singapore">🇸🇬 싱가포르 (SGT)</option>
+                        <option value="Australia/Sydney">🇦🇺 시드니 (AEST/AEDT)</option>
+                        <option value="Australia/Melbourne">🇦🇺 멜버른 (AEST/AEDT)</option>
+                        <option value="America/Toronto">🇨🇦 토론토 (EST/EDT)</option>
+                        <option value="America/Vancouver">🇨🇦 밴쿠버 (PST/PDT)</option>
+                        <option value="America/Sao_Paulo">🇧🇷 상파울루 (BRT)</option>
+                        <option value="Asia/Dubai">🇦🇪 두바이 (GST)</option>
+                        <option value="Asia/Mumbai">🇮🇳 뭄바이 (IST)</option>
+                        <option value="Africa/Cairo">🇪🇬 카이로 (EET)</option>
+                        <option value="Africa/Johannesburg">🇿🇦 요하네스버그 (SAST)</option>
+                        <option value="Pacific/Auckland">🇳🇿 오클랜드 (NZST/NZDT)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="custom-timezone" class="block text-sm font-medium text-gray-700 mb-2">사용자 정의 시간대</label>
+                    <input type="text" id="custom-timezone" placeholder="예: Asia/Seoul" 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button id="apply-timezone" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        시간대 적용
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Major Cities Time Display -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">주요 도시 시간</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- Major cities will be populated here -->
+            </div>
+        </div>
+
+        <!-- World Clock Grid -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">세계 시계</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="world-clock-grid">
+                <!-- World clocks will be populated here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-500">
+                <p>&copy; 2025 TripFlow. 시간 정보는 참고용입니다.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="./js/worldtime.js"></script>
+</body>
+</html>
