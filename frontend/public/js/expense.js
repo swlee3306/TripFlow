@@ -59,26 +59,45 @@ class ExpenseTracker {
 
     async loadExpenses() {
         try {
-            const response = await fetch('http://localhost:8080/api/expenses');
+            const response = await fetch('http://localhost:8080/api/expenses', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
+            });
+            
             if (response.ok) {
                 const data = await response.json();
                 this.expenses = data.expenses || [];
                 this.updateExpenseList();
                 this.updateCharts();
+            } else {
+                console.error('Failed to load expenses:', response.status, response.statusText);
+                this.showError('지출 내역을 불러오는데 실패했습니다.');
             }
         } catch (error) {
             console.error('Error loading expenses:', error);
-            this.showError('지출 내역을 불러오는데 실패했습니다.');
+            this.showError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
         }
     }
 
     async loadBudget() {
         try {
-            const response = await fetch('http://localhost:8080/api/expenses/budget');
+            const response = await fetch('http://localhost:8080/api/expenses/budget', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
+            });
+            
             if (response.ok) {
                 const data = await response.json();
                 this.budget = data.budget || 0;
                 this.updateSummary();
+            } else {
+                console.error('Failed to load budget:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Error loading budget:', error);
@@ -118,6 +137,7 @@ class ExpenseTracker {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                mode: 'cors',
                 body: JSON.stringify(expense)
             });
 
@@ -151,6 +171,7 @@ class ExpenseTracker {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                mode: 'cors',
                 body: JSON.stringify({ budget: budgetAmount })
             });
 
@@ -171,7 +192,11 @@ class ExpenseTracker {
     async deleteExpense(expenseId) {
         try {
             const response = await fetch(`http://localhost:8080/api/expenses/${expenseId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
             });
 
             if (response.ok) {
@@ -456,10 +481,19 @@ class ExpenseTracker {
 
     async loadExchangeRates() {
         try {
-            const response = await fetch('http://localhost:8080/api/exchange/rates?base=KRW');
+            const response = await fetch('http://localhost:8080/api/exchange/rates?base=KRW', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
+            });
+            
             if (response.ok) {
                 const data = await response.json();
                 this.exchangeRates = data.rates;
+            } else {
+                console.error('Failed to load exchange rates:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Error loading exchange rates:', error);
