@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +69,217 @@ func initRouter() {
 	// Initialize Redis connection
 	initRedis()
 
+	// Exchange Rate API
+	api.GET("/exchange/rates", func(c *gin.Context) {
+		base := c.Query("base")
+		if base == "" {
+			base = "KRW"
+		}
+		
+		// Mock exchange rates for demo
+		rates := map[string]float64{
+			"USD": 0.00075,
+			"EUR": 0.00069,
+			"JPY": 0.11,
+			"CNY": 0.0054,
+			"GBP": 0.00059,
+			"AUD": 0.0011,
+			"CAD": 0.0010,
+		}
+		
+		c.JSON(200, gin.H{
+			"base": base,
+			"date": time.Now().Format("2006-01-02"),
+			"rates": rates,
+		})
+	})
+
+	api.GET("/exchange/convert", func(c *gin.Context) {
+		from := c.Query("from")
+		to := c.Query("to")
+		amountStr := c.Query("amount")
+		
+		if from == "" || to == "" || amountStr == "" {
+			c.JSON(400, gin.H{
+				"error": "Missing required parameters",
+			})
+			return
+		}
+		
+		amount, err := strconv.ParseFloat(amountStr, 64)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"error": "Invalid amount",
+			})
+			return
+		}
+		
+		// Mock conversion (simplified)
+		convertedAmount := amount * 0.00075 // Mock rate
+		
+		c.JSON(200, gin.H{
+			"from": from,
+			"to": to,
+			"amount": amount,
+			"converted_amount": convertedAmount,
+		})
+	})
+
+	// Expense API
+	api.GET("/expenses", func(c *gin.Context) {
+		expenses, err := kvGet("expenses:list")
+		if err != nil {
+			c.JSON(200, gin.H{
+				"expenses": []gin.H{},
+			})
+			return
+		}
+		
+		var expenseList []gin.H
+		if expenses != "" {
+			json.Unmarshal([]byte(expenses), &expenseList)
+		}
+		
+		c.JSON(200, gin.H{
+			"expenses": expenseList,
+		})
+	})
+
+	api.POST("/expenses", func(c *gin.Context) {
+		var expense gin.H
+		if err := c.ShouldBindJSON(&expense); err != nil {
+			c.JSON(400, gin.H{
+				"error": "Invalid request body",
+			})
+			return
+		}
+		
+		// Get existing expenses
+		expenses, err := kvGet("expenses:list")
+		var expenseList []gin.H
+		if err == nil && expenses != "" {
+			json.Unmarshal([]byte(expenses), &expenseList)
+		}
+		
+		// Add new expense
+		expenseList = append(expenseList, expense)
+		
+		// Save back to Redis
+		expenseData, _ := json.Marshal(expenseList)
+		kvSet("expenses:list", string(expenseData))
+		
+		c.JSON(200, gin.H{
+			"message": "Expense added successfully",
+			"expense": expense,
+		})
+	})
+
+	api.DELETE("/expenses/:id", func(c *gin.Context) {
+		expenseId := c.Param("id")
+		
+		// Get existing expenses
+		expenses, err := kvGet("expenses:list")
+		if err != nil {
+			c.JSON(404, gin.H{
+				"error": "No expenses found",
+			})
+			return
+		}
+		
+		var expenseList []gin.H
+		json.Unmarshal([]byte(expenses), &expenseList)
+		
+		// Filter out the expense to delete
+		var filteredExpenses []gin.H
+		for _, expense := range expenseList {
+			if expense["id"] != expenseId {
+				filteredExpenses = append(filteredExpenses, expense)
+			}
+		}
+		
+		// Save back to Redis
+		expenseData, _ := json.Marshal(filteredExpenses)
+		kvSet("expenses:list", string(expenseData))
+		
+		c.JSON(200, gin.H{
+			"message": "Expense deleted successfully",
+		})
+	})
+
+	api.GET("/expenses/budget", func(c *gin.Context) {
+		budget, err := kvGet("budget")
+		if err != nil {
+			c.JSON(200, gin.H{
+				"budget": 0,
+			})
+			return
+		}
+		
+		var budgetAmount float64
+		json.Unmarshal([]byte(budget), &budgetAmount)
+		
+		c.JSON(200, gin.H{
+			"budget": budgetAmount,
+		})
+	})
+
+	api.POST("/expenses/budget", func(c *gin.Context) {
+		var budgetData gin.H
+		if err := c.ShouldBindJSON(&budgetData); err != nil {
+			c.JSON(400, gin.H{
+				"error": "Invalid request body",
+			})
+			return
+		}
+		
+		budgetAmount := budgetData["budget"]
+		budgetJson, _ := json.Marshal(budgetAmount)
+		kvSet("budget", string(budgetJson))
+		
+		c.JSON(200, gin.H{
+			"message": "Budget set successfully",
+			"budget": budgetAmount,
+		})
+	})
+
+	api.GET("/expenses/stats", func(c *gin.Context) {
+		expenses, err := kvGet("expenses:list")
+		if err != nil {
+			c.JSON(200, gin.H{
+				"total_expenses": 0,
+				"category_breakdown": gin.H{},
+				"daily_breakdown": gin.H{},
+			})
+			return
+		}
+		
+		var expenseList []gin.H
+		json.Unmarshal([]byte(expenses), &expenseList)
+		
+		totalExpenses := 0.0
+		categoryBreakdown := gin.H{}
+		dailyBreakdown := gin.H{}
+		
+		for _, expense := range expenseList {
+			if amount, ok := expense["amount"].(float64); ok {
+				totalExpenses += amount
+			}
+			
+			if category, ok := expense["category"].(string); ok {
+				if current, exists := categoryBreakdown[category]; exists {
+					categoryBreakdown[category] = current.(float64) + expense["amount"].(float64)
+				} else {
+					categoryBreakdown[category] = expense["amount"]
+				}
+			}
+		}
+		
+		c.JSON(200, gin.H{
+			"total_expenses": totalExpenses,
+			"category_breakdown": categoryBreakdown,
+			"daily_breakdown": dailyBreakdown,
+		})
+	})
 	
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
