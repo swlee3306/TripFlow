@@ -21,12 +21,17 @@ export default async function handler(req, res) {
 
       await redisClient.connect();
       
-      // Get files list from Redis
+      // Get files list from Redis (same logic as Go server)
       const fileList = await redisClient.get('files:list');
       
       if (fileList) {
         const files = JSON.parse(fileList);
-        res.status(200).json(files);
+        // Transform to match Go server format
+        const result = files.map(file => ({
+          name: file.Filename || file.name,
+          size: file.Size || file.size || 0
+        }));
+        res.status(200).json(result);
       } else {
         res.status(200).json([]);
       }
