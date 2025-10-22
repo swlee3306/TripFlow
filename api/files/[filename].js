@@ -21,24 +21,9 @@ export default async function handler(req, res) {
     }
 
     // Decode the filename properly
-    let decodedFilename;
-    try {
-      // Try standard URL decoding first
-      decodedFilename = decodeURIComponent(filename);
-      console.log('🔍 Method 1 - decodeURIComponent:', decodedFilename);
-    } catch (e) {
-      try {
-        // Try Base64 decoding as fallback
-        decodedFilename = decodeURIComponent(escape(atob(filename)));
-        console.log('🔍 Method 2 - Base64 decoding:', decodedFilename);
-      } catch (e2) {
-        // Use original filename as last resort
-        decodedFilename = filename;
-        console.log('🔍 Method 3 - Using original:', decodedFilename);
-      }
-    }
-    
-    console.log('🔍 Final decoded filename:', decodedFilename);
+    const decodedFilename = decodeURIComponent(filename);
+    console.log('🔍 Original filename:', filename);
+    console.log('🔍 Decoded filename:', decodedFilename);
 
     // Connect to Redis Cloud
     const redisClient = createClient({
