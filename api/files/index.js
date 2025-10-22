@@ -1,4 +1,6 @@
 // Vercel API Route for files
+import { createClient } from 'redis';
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,8 +14,24 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Get files list - return array directly for compatibility
-      res.status(200).json([]);
+      // Connect to Redis Cloud
+      const redisClient = createClient({
+        url: 'redis://default:27MKL27G0P2cVEUvV7WShJOMnbgtIbtK@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928'
+      });
+
+      await redisClient.connect();
+      
+      // Get files list from Redis
+      const fileList = await redisClient.get('files:list');
+      
+      if (fileList) {
+        const files = JSON.parse(fileList);
+        res.status(200).json(files);
+      } else {
+        res.status(200).json([]);
+      }
+      
+      await redisClient.disconnect();
     } else {
       res.status(405).json({ error: 'Method not allowed' });
     }
