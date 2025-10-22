@@ -91,17 +91,19 @@
     <div id="main-content" class="hidden">
         <!-- Header -->
         <header class="no-print bg-white shadow-sm border-b">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-3">
-                        <a href="/" class="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            <span class="text-xl font-bold">TripFlow</span>
-                        </a>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <svg class="h-8 w-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                        <h1 class="text-2xl font-bold text-gray-900">TripFlow</h1>
                     </div>
-                    <div class="flex items-center space-x-4">
+                    <nav class="flex items-center space-x-4">
+                        <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">홈</a>
+                        <a href="/exchange.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">환율 계산기</a>
+                        <a href="/worldtime.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">세계 시간</a>
+                        <a href="/expense.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">여행 가계부</a>
                         <!-- Dark/Light Mode Toggle -->
                         <button id="theme-toggle" class="no-print p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
                             <svg id="theme-icon" class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +111,7 @@
                             </svg>
                         </button>
                         <!-- Print Button -->
-                        <button id="print-button" class="no-print bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors">
+                        <button id="print-button" class="no-print bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
                             <svg class="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
@@ -122,7 +124,7 @@
                             </svg>
                             공유
                         </button>
-                    </div>
+                    </nav>
                 </div>
             </div>
         </header>
