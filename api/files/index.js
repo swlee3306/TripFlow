@@ -12,13 +12,8 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Get files list
-      res.status(200).json({
-        files: [],
-        total: 0,
-        page: 1,
-        limit: 10,
-      });
+      // Get files list - return array directly for compatibility
+      res.status(200).json([]);
     } else {
       res.status(405).json({ error: 'Method not allowed' });
     }

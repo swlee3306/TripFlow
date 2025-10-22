@@ -153,7 +153,9 @@ class TripFlowViewer {
         try {
             const response = await fetch('/api/files');
             if (response.ok) {
-                this.markdownFiles = await response.json();
+                const data = await response.json();
+                // Ensure data is an array
+                this.markdownFiles = Array.isArray(data) ? data : [];
                 this.filteredFiles = [];
                 this.renderFileList();
             } else {
@@ -185,7 +187,7 @@ class TripFlowViewer {
             console.log('🎯 NO SEARCH - using markdownFiles:', filesToRender.length);
         }
         console.log('🎯 FILES TO RENDER:', filesToRender.length);
-        console.log('🎯 FILES TO RENDER CONTENT:', filesToRender.map(f => f.name));
+        console.log('🎯 FILES TO RENDER CONTENT:', Array.isArray(filesToRender) ? filesToRender.map(f => f.name) : 'Not an array');
 
         if (filesToRender.length === 0) {
             if (this.markdownFiles.length === 0) {
@@ -199,7 +201,7 @@ class TripFlowViewer {
 
         if (fileCount) fileCount.textContent = filesToRender.length;
 
-        fileList.innerHTML = filesToRender.map(file => `
+        fileList.innerHTML = Array.isArray(filesToRender) ? filesToRender.map(file => `
             <div class="border rounded-lg p-4 hover:bg-gray-50">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center cursor-pointer" onclick="tripFlowViewer.openFile('${file.name}')">
@@ -224,7 +226,7 @@ class TripFlowViewer {
                 <p class="text-sm text-gray-500">${file.size} bytes</p>
                 <p class="text-xs text-gray-400 mt-1">클릭하여 여행 계획 보기</p>
             </div>
-        `).join('');
+        `).join('') : '<p class="text-gray-500 col-span-full">데이터 형식 오류</p>';
     }
 
     async openFile(filename) {
@@ -392,6 +394,12 @@ class TripFlowViewer {
     }
 
     applyFilters() {
+        // Ensure markdownFiles is an array
+        if (!Array.isArray(this.markdownFiles)) {
+            console.error('markdownFiles is not an array:', this.markdownFiles);
+            this.markdownFiles = [];
+        }
+        
         let filtered = [...this.markdownFiles];
         console.log('🔍 Applying filters:', this.filters);
         console.log('📁 Original files count:', this.markdownFiles.length);
