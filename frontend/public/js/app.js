@@ -230,8 +230,15 @@ class TripFlowViewer {
     }
 
     async openFile(filename) {
+        // Safety check for filename
+        if (!filename || filename === 'undefined' || filename.trim() === '') {
+            console.error('Invalid filename:', filename);
+            this.showError('유효하지 않은 파일명입니다.');
+            return;
+        }
+        
         try {
-            const response = await fetch(`/api/files/${filename}`);
+            const response = await fetch(`/api/files/${encodeURIComponent(filename)}`);
             if (response.ok) {
                 const content = await response.text();
                 this.currentFile = filename;
@@ -376,8 +383,15 @@ class TripFlowViewer {
     }
 
     downloadFile(filename) {
+        // Safety check for filename
+        if (!filename || filename === 'undefined' || filename.trim() === '') {
+            console.error('Invalid filename for download:', filename);
+            this.showError('유효하지 않은 파일명입니다.');
+            return;
+        }
+        
         // Create a download link with the download parameter
-        const downloadUrl = `/api/files/${filename}?download=true`;
+        const downloadUrl = `/api/files/${encodeURIComponent(filename)}?download=true`;
         
         // Create a temporary anchor element to trigger download
         const link = document.createElement('a');
@@ -484,16 +498,22 @@ class TripFlowViewer {
             });
         }
 
-        // Sort
+        // Sort with safety checks
         filtered.sort((a, b) => {
             switch (this.filters.sort) {
                 case 'name':
-                    return a.name.localeCompare(b.name);
+                    const nameA = a.name || '';
+                    const nameB = b.name || '';
+                    return nameA.localeCompare(nameB);
                 case 'size':
-                    return b.size - a.size; // Descending order
+                    const sizeA = a.size || 0;
+                    const sizeB = b.size || 0;
+                    return sizeB - sizeA; // Descending order
                 case 'date':
                     // Since we don't have date info in the current structure, use name as fallback
-                    return a.name.localeCompare(b.name);
+                    const dateA = a.name || '';
+                    const dateB = b.name || '';
+                    return dateA.localeCompare(dateB);
                 default:
                     return 0;
             }
@@ -754,12 +774,19 @@ class TripFlowViewer {
     }
 
     async deleteFile(filename) {
+        // Safety check for filename
+        if (!filename || filename === 'undefined' || filename.trim() === '') {
+            console.error('Invalid filename for deletion:', filename);
+            this.showError('유효하지 않은 파일명입니다.');
+            return;
+        }
+        
         if (!confirm(`"${filename}" 파일을 삭제하시겠습니까?`)) {
             return;
         }
 
         try {
-            const response = await fetch(`/api/files/${filename}`, {
+            const response = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
                 method: 'DELETE'
             });
 
