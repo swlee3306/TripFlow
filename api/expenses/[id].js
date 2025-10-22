@@ -18,11 +18,29 @@ export default async function handler(req, res) {
     console.log('🔍 URL:', req.url);
     
     if (req.method === 'DELETE') {
-      const { id } = req.query;
+      // Vercel dynamic routes: get ID from URL path
+      // Method 1: Try req.query first (standard way)
+      let id = req.query.id;
       
-      console.log('🔍 Expense ID from query:', id);
-      
+      // Method 2: If not in query, extract from URL
       if (!id) {
+        const urlParts = req.url.split('/');
+        id = urlParts[urlParts.length - 1];
+      }
+      
+      // Method 3: Try to get from req.url directly
+      if (!id) {
+        const match = req.url.match(/\/api\/expenses\/(.+)$/);
+        if (match) {
+          id = match[1];
+        }
+      }
+      
+      console.log('🔍 Expense ID from query:', req.query.id);
+      console.log('🔍 Expense ID from URL parsing:', id);
+      console.log('🔍 Full URL:', req.url);
+      
+      if (!id || id === '') {
         console.log('❌ Missing expense ID');
         res.status(400).json({ error: 'Missing expense ID' });
         return;

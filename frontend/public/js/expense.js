@@ -206,12 +206,13 @@ class ExpenseTracker {
     async deleteExpense(expenseId) {
         try {
             const apiBaseUrl = this.getApiBaseUrl();
-            const response = await fetch(`${apiBaseUrl}/api/expenses/${expenseId}`, {
-                method: 'DELETE',
+            const response = await fetch(`${apiBaseUrl}/api/expenses/delete`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                mode: 'cors'
+                mode: 'cors',
+                body: JSON.stringify({ id: expenseId })
             });
 
             if (response.ok) {
