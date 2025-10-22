@@ -6,11 +6,13 @@ class ExpenseTracker {
         this.currentFilter = 'all';
         this.categoryChart = null;
         this.dailyChart = null;
+        this.exchangeRates = {};
         this.init();
     }
 
     init() {
         this.setupEventListeners();
+        this.loadExchangeRates();
         this.loadExpenses();
         this.loadBudget();
         this.updateSummary();
@@ -44,6 +46,15 @@ class ExpenseTracker {
                 });
             }
         });
+
+        // Currency conversion
+        const amountInput = document.getElementById('expense-amount');
+        const currencySelect = document.getElementById('expense-currency');
+        
+        if (amountInput && currencySelect) {
+            amountInput.addEventListener('input', () => this.updateCurrencyConversion());
+            currencySelect.addEventListener('change', () => this.updateCurrencyConversion());
+        }
     }
 
     async loadExpenses() {
@@ -76,6 +87,7 @@ class ExpenseTracker {
 
     async addExpense() {
         const amount = parseFloat(document.getElementById('expense-amount').value);
+        const currency = document.getElementById('expense-currency').value;
         const category = document.getElementById('expense-category').value;
         const description = document.getElementById('expense-description').value;
 
@@ -84,8 +96,16 @@ class ExpenseTracker {
             return;
         }
 
+        // Convert to KRW if not already
+        let krwAmount = amount;
+        if (currency !== 'KRW') {
+            krwAmount = this.convertToKRW(amount, currency);
+        }
+
         const expense = {
-            amount: amount,
+            amount: krwAmount,
+            originalAmount: amount,
+            originalCurrency: currency,
             category: category,
             description: description,
             date: new Date().toISOString(),
@@ -189,6 +209,10 @@ class ExpenseTracker {
                     <div>
                         <h4 class="font-medium text-gray-900">${expense.description}</h4>
                         <p class="text-sm text-gray-500">${this.getCategoryName(expense.category)} • ${this.formatDate(expense.date)}</p>
+                        ${expense.originalCurrency && expense.originalCurrency !== 'KRW' ? 
+                            `<p class="text-xs text-blue-600">${this.getCurrencySymbol(expense.originalCurrency)}${this.formatNumber(expense.originalAmount)} → ₩${this.formatNumber(expense.amount)}</p>` : 
+                            ''
+                        }
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -402,6 +426,20 @@ class ExpenseTracker {
         return colors[category] || colors['other'];
     }
 
+    getCurrencySymbol(currency) {
+        const symbols = {
+            'USD': '$',
+            'EUR': '€',
+            'JPY': '¥',
+            'CNY': '¥',
+            'GBP': '£',
+            'AUD': '$',
+            'CAD': '$',
+            'KRW': '₩'
+        };
+        return symbols[currency] || currency;
+    }
+
     formatNumber(number) {
         return new Intl.NumberFormat('ko-KR').format(number);
     }
@@ -416,10 +454,48 @@ class ExpenseTracker {
         });
     }
 
+    async loadExchangeRates() {
+        try {
+            const response = await fetch('http://localhost:8080/api/exchange/rates?base=KRW');
+            if (response.ok) {
+                const data = await response.json();
+                this.exchangeRates = data.rates;
+            }
+        } catch (error) {
+            console.error('Error loading exchange rates:', error);
+        }
+    }
+
+    convertToKRW(amount, fromCurrency) {
+        if (fromCurrency === 'KRW') return amount;
+        if (!this.exchangeRates[fromCurrency]) return amount;
+        
+        // Convert from foreign currency to KRW
+        return amount / this.exchangeRates[fromCurrency];
+    }
+
+    updateCurrencyConversion() {
+        const amount = parseFloat(document.getElementById('expense-amount').value);
+        const currency = document.getElementById('expense-currency').value;
+        const convertedDiv = document.getElementById('converted-amount');
+        const krwAmountSpan = document.getElementById('krw-amount');
+
+        if (!amount || currency === 'KRW') {
+            convertedDiv.classList.add('hidden');
+            return;
+        }
+
+        const krwAmount = this.convertToKRW(amount, currency);
+        krwAmountSpan.textContent = `₩${this.formatNumber(Math.round(krwAmount))}`;
+        convertedDiv.classList.remove('hidden');
+    }
+
     clearForm() {
         document.getElementById('expense-amount').value = '';
+        document.getElementById('expense-currency').value = 'KRW';
         document.getElementById('expense-category').value = '';
         document.getElementById('expense-description').value = '';
+        document.getElementById('converted-amount').classList.add('hidden');
     }
 
     showSuccess(message) {
