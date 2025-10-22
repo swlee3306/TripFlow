@@ -99,7 +99,8 @@
                         </svg>
                         <h1 class="text-2xl font-bold text-gray-900">TripFlow</h1>
                     </div>
-                    <nav class="flex items-center space-x-4">
+                    <!-- Desktop Navigation -->
+                    <nav class="hidden md:flex items-center space-x-4">
                         <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">홈</a>
                         <a href="/exchange.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">환율 계산기</a>
                         <a href="/worldtime.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">세계 시간</a>
@@ -125,6 +126,45 @@
                             공유
                         </button>
                     </nav>
+
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Navigation -->
+                <div id="mobile-menu" class="hidden md:hidden">
+                    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 rounded-lg mt-2">
+                        <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">홈</a>
+                        <a href="/exchange.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">환율 계산기</a>
+                        <a href="/worldtime.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">세계 시간</a>
+                        <a href="/expense.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">여행 가계부</a>
+                        <!-- Mobile Action Buttons -->
+                        <div class="border-t border-gray-200 pt-2 mt-2">
+                            <button id="mobile-theme-toggle" class="no-print w-full flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                                다크 모드
+                            </button>
+                            <button id="mobile-print-button" class="no-print w-full flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                인쇄
+                            </button>
+                            <button id="mobile-share-button" class="no-print w-full flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                                </svg>
+                                공유
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 </div>
             </div>
         </header>
@@ -330,6 +370,41 @@
                 if (shareTwitter) {
                     shareTwitter.addEventListener('click', () => {
                         this.shareToTwitter();
+                    });
+                }
+
+                // Mobile menu toggle
+                const mobileMenuButton = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                
+                if (mobileMenuButton && mobileMenu) {
+                    mobileMenuButton.addEventListener('click', () => {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+
+                // Mobile action buttons
+                const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+                if (mobileThemeToggle) {
+                    mobileThemeToggle.addEventListener('click', () => {
+                        this.toggleTheme();
+                        mobileMenu.classList.add('hidden');
+                    });
+                }
+
+                const mobilePrintButton = document.getElementById('mobile-print-button');
+                if (mobilePrintButton) {
+                    mobilePrintButton.addEventListener('click', () => {
+                        window.print();
+                        mobileMenu.classList.add('hidden');
+                    });
+                }
+
+                const mobileShareButton = document.getElementById('mobile-share-button');
+                if (mobileShareButton) {
+                    mobileShareButton.addEventListener('click', () => {
+                        this.showShareModal();
+                        mobileMenu.classList.add('hidden');
                     });
                 }
             }
