@@ -22,6 +22,14 @@
       "dest": "/api/expenses/stats.js"
     },
     {
+      "src": "/api/files",
+      "dest": "/api/files/index.js"
+    },
+    {
+      "src": "/api/expenses/([^/]+)",
+      "dest": "/api/expenses/[id].js"
+    },
+    {
       "src": "/markdown-files/(.*)",
       "dest": "/frontend/public/markdown-files/$1"
     },
