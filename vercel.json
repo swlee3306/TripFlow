@@ -26,6 +26,10 @@
       "dest": "/api/files/index.js"
     },
     {
+      "src": "/api/files/by-id",
+      "dest": "/api/files/by-id.js"
+    },
+    {
       "src": "/api/expenses/([^/]+)",
       "dest": "/api/expenses/[id].js"
     },
