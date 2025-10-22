@@ -1,14 +1,25 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.go": {
-      "runtime": "@vercel/go@3.2.3"
-    }
-  },
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.go"
+      "src": "/api/exchange/rates",
+      "dest": "/api/exchange/rates.js"
+    },
+    {
+      "src": "/api/exchange/convert",
+      "dest": "/api/exchange/convert.js"
+    },
+    {
+      "src": "/api/expenses",
+      "dest": "/api/expenses/index.js"
+    },
+    {
+      "src": "/api/expenses/budget",
+      "dest": "/api/expenses/budget.js"
+    },
+    {
+      "src": "/api/expenses/stats",
+      "dest": "/api/expenses/stats.js"
     },
     {
       "src": "/markdown-files/(.*)",
@@ -21,4 +32,5 @@
   ],
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/public"
+}
 }
