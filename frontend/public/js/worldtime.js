@@ -210,6 +210,24 @@ class WorldTimeDisplay {
         if (timeIndicator) {
             timeIndicator.textContent = timeOfDay;
         }
+        
+        // Update time of day badge styling
+        const timeBadge = document.getElementById('time-of-day-badge');
+        if (timeBadge) {
+            timeBadge.className = 'ml-2 px-2 py-1 rounded-full text-xs font-medium';
+            if (hours >= 0 && hours < 6) {
+                timeBadge.className += ' bg-indigo-100 text-indigo-800';
+            } else if (hours >= 6 && hours < 12) {
+                timeBadge.className += ' bg-sky-100 text-sky-800';
+            } else if (hours >= 12 && hours < 18) {
+                timeBadge.className += ' bg-amber-100 text-amber-800';
+            } else {
+                timeBadge.className += ' bg-gray-100 text-gray-800';
+            }
+        }
+        
+        // Update color legend cards highlighting
+        this.updateColorLegendHighlight(hours);
     }
 
     getTimezoneName(timezone) {
@@ -435,6 +453,37 @@ class WorldTimeDisplay {
         }
         if (secondHand) {
             secondHand.style.backgroundColor = secondColor;
+        }
+    }
+
+    updateColorLegendHighlight(hours) {
+        // Reset all cards
+        const dawnCard = document.getElementById('dawn-card');
+        const morningCard = document.getElementById('morning-card');
+        const afternoonCard = document.getElementById('afternoon-card');
+        const nightCard = document.getElementById('night-card');
+        
+        // Remove active styling from all cards
+        [dawnCard, morningCard, afternoonCard, nightCard].forEach(card => {
+            if (card) {
+                card.className = 'border rounded-lg p-4 hover:shadow-md transition-shadow opacity-60';
+            }
+        });
+        
+        // Highlight current time period card
+        let activeCard;
+        if (hours >= 0 && hours < 6) {
+            activeCard = dawnCard;
+        } else if (hours >= 6 && hours < 12) {
+            activeCard = morningCard;
+        } else if (hours >= 12 && hours < 18) {
+            activeCard = afternoonCard;
+        } else {
+            activeCard = nightCard;
+        }
+        
+        if (activeCard) {
+            activeCard.className = 'border-2 border-blue-500 rounded-lg p-4 shadow-lg transition-all duration-500 opacity-100 bg-blue-50';
         }
     }
 
