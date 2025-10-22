@@ -394,7 +394,7 @@ class TripFlowViewer {
         }
     }
 
-    downloadFile(filename) {
+    async downloadFile(filename) {
         // Safety check for filename
         if (!filename || filename === 'undefined' || filename.trim() === '') {
             console.error('Invalid filename for download:', filename);
