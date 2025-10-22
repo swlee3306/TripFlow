@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>여행 가계부 - TripFlow</title>
+    <meta name="description" content="여행 중 지출을 관리하고 예산을 추적하세요">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23059669' d='M16 2L4 8v16l12 6 12-6V8L16 2z'/><path fill='%23ffffff' d='M12 14h8v4h-8z'/></svg>">
+    
+    <!-- Tailwind CSS -->
+    <link href="./css/output.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for expense visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-900">TripFlow</h1>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">홈</a>
+                    <a href="/exchange.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">환율 계산기</a>
+                    <a href="/worldtime.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">세계 시간</a>
+                    <a href="/expense.html" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium">여행 가계부</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">여행 가계부</h2>
+            <p class="text-gray-600">여행 중 지출을 관리하고 예산을 추적하세요</p>
+        </div>
+
+        <!-- Budget Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Budget -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-wallet text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">총 예산</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-budget">₩0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Spent -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="fas fa-credit-card text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">총 지출</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-spent">₩0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remaining Budget -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-piggy-bank text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">남은 예산</p>
+                        <p class="text-2xl font-bold text-gray-900" id="remaining-budget">₩0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Expense Form -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">지출 추가</h3>
+            <form id="expense-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="expense-amount" class="block text-sm font-medium text-gray-700 mb-2">금액</label>
+                    <input type="number" id="expense-amount" placeholder="0" 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="expense-category" class="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+                    <select id="expense-category" 
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <option value="">카테고리 선택</option>
+                        <option value="food">🍽️ 식비</option>
+                        <option value="transport">🚗 교통비</option>
+                        <option value="accommodation">🏨 숙박비</option>
+                        <option value="shopping">🛍️ 쇼핑</option>
+                        <option value="entertainment">🎭 엔터테인먼트</option>
+                        <option value="sightseeing">🏛️ 관광</option>
+                        <option value="other">📝 기타</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="expense-description" class="block text-sm font-medium text-gray-700 mb-2">설명</label>
+                    <input type="text" id="expense-description" placeholder="지출 내역" 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>추가
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Budget Settings -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">예산 설정</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="budget-amount" class="block text-sm font-medium text-gray-700 mb-2">총 예산</label>
+                    <input type="number" id="budget-amount" placeholder="0" 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button id="set-budget" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                        <i class="fas fa-save mr-2"></i>예산 설정
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense List -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">지출 내역</h3>
+                <div class="flex space-x-2">
+                    <button id="filter-all" class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors">전체</button>
+                    <button id="filter-food" class="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors">식비</button>
+                    <button id="filter-transport" class="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors">교통비</button>
+                    <button id="filter-accommodation" class="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors">숙박비</button>
+                    <button id="filter-other" class="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors">기타</button>
+                </div>
+            </div>
+            <div id="expense-list" class="space-y-4">
+                <!-- Expenses will be populated here -->
+            </div>
+        </div>
+
+        <!-- Expense Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">지출 분석</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Category Chart -->
+                <div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-4">카테고리별 지출</h4>
+                    <div class="h-64">
+                        <canvas id="category-chart"></canvas>
+                    </div>
+                </div>
+                <!-- Daily Chart -->
+                <div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-4">일별 지출</h4>
+                    <div class="h-64">
+                        <canvas id="daily-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-500">
+                <p>&copy; 2025 TripFlow. 가계부 정보는 참고용입니다.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="./js/expense.js"></script>
+</body>
+</html>

@@ -11,6 +11,7 @@ import (
 	"tripflow/pkg/filestorage"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 func main() {
@@ -65,6 +66,13 @@ func main() {
 		log.Fatalf("Failed to initialize file storage: %v", err)
 	}
 
+	// Initialize Redis client
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
 	// Initialize repositories
 	scheduleRepo := repositories.NewScheduleRepository(db)
 
@@ -73,6 +81,7 @@ func main() {
 	fileHandler := handlers.NewFileHandler(fileStorage, db)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleRepo, fileStorage)
 	exchangeHandler := handlers.NewExchangeHandler()
+	expenseHandler := handlers.NewExpenseHandler(redisClient)
 
 	// Public routes with rate limiting
 	api := router.Group("/api")
@@ -104,6 +113,14 @@ func main() {
 		// Exchange rate routes
 		api.GET("/exchange/rates", exchangeHandler.GetExchangeRates)
 		api.GET("/exchange/convert", exchangeHandler.ConvertCurrency)
+
+		// Expense routes
+		api.GET("/expenses", expenseHandler.GetExpenses)
+		api.POST("/expenses", expenseHandler.AddExpense)
+		api.DELETE("/expenses/:id", expenseHandler.DeleteExpense)
+		api.GET("/expenses/budget", expenseHandler.GetBudget)
+		api.POST("/expenses/budget", expenseHandler.SetBudget)
+		api.GET("/expenses/stats", expenseHandler.GetExpenseStats)
 	}
 
 	// Protected routes (require authentication and CSRF protection)
