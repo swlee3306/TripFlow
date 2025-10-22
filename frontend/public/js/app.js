@@ -242,15 +242,8 @@ class TripFlowViewer {
         }
         
         try {
-            // Use POST method with filename in body to avoid URL encoding issues
-            const response = await fetch('/api/files/content', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ filename: filename })
-            });
-            
+            // Use the original GET method with proper URL encoding
+            const response = await fetch(`/api/files/${encodeURIComponent(filename)}`);
             if (response.ok) {
                 const content = await response.text();
                 this.currentFile = filename;
@@ -402,44 +395,21 @@ class TripFlowViewer {
             return;
         }
         
-        // Use POST method for download to avoid URL encoding issues
-        const downloadUrl = `/api/files/download`;
+        // Use the original GET method with download parameter
+        const downloadUrl = `/api/files/${encodeURIComponent(filename)}?download=true`;
         
-        // Use fetch to download file content
-        try {
-            const response = await fetch('/api/files/content', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ filename: filename })
-            });
-            
-            if (response.ok) {
-                const content = await response.text();
-                
-                // Create blob and download
-                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = filename;
-                link.style.display = 'none';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                URL.revokeObjectURL(url);
-                this.showSuccess(`파일 다운로드가 시작되었습니다: ${filename}`);
-            } else {
-                this.showError('파일 다운로드를 불러올 수 없습니다.');
-            }
-        } catch (error) {
-            console.error('Download error:', error);
-            this.showError('파일 다운로드 중 오류가 발생했습니다.');
-        }
+        // Create a temporary anchor element to trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        // Add to DOM, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showSuccess(`파일 다운로드가 시작되었습니다: ${filename}`);
     }
 
     applyFilters() {
@@ -821,12 +791,8 @@ class TripFlowViewer {
         }
 
         try {
-            const response = await fetch('/api/files/delete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ filename: filename })
+            const response = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+                method: 'DELETE'
             });
 
             const result = await response.json();
