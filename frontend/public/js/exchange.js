@@ -13,6 +13,16 @@ class ExchangeCalculator {
         this.initializeChart();
     }
 
+    getApiBaseUrl() {
+        // Check if we're in development (localhost) or production
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8080';
+        } else {
+            // In production, use relative path or environment variable
+            return window.location.origin;
+        }
+    }
+
     setupEventListeners() {
         // Calculate button
         const calculateBtn = document.getElementById('calculate-btn');
@@ -64,8 +74,9 @@ class ExchangeCalculator {
         this.showLoading();
         
         try {
-            // Using our backend API to avoid CORS issues
-            const response = await fetch('http://localhost:8080/api/exchange/rates?base=KRW');
+            // Get API base URL from environment or use relative path
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/exchange/rates?base=KRW`);
             
             if (!response.ok) {
                 throw new Error('Failed to fetch exchange rates');

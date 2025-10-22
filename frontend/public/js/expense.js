@@ -18,6 +18,16 @@ class ExpenseTracker {
         this.updateSummary();
     }
 
+    getApiBaseUrl() {
+        // Check if we're in development (localhost) or production
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8080';
+        } else {
+            // In production, use relative path or environment variable
+            return window.location.origin;
+        }
+    }
+
     setupEventListeners() {
         // Expense form submission
         const expenseForm = document.getElementById('expense-form');
@@ -59,7 +69,8 @@ class ExpenseTracker {
 
     async loadExpenses() {
         try {
-            const response = await fetch('http://localhost:8080/api/expenses', {
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/expenses`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,7 +95,8 @@ class ExpenseTracker {
 
     async loadBudget() {
         try {
-            const response = await fetch('http://localhost:8080/api/expenses/budget', {
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/expenses/budget`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -132,7 +144,8 @@ class ExpenseTracker {
         };
 
         try {
-            const response = await fetch('http://localhost:8080/api/expenses', {
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/expenses`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -166,7 +179,8 @@ class ExpenseTracker {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/expenses/budget', {
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/expenses/budget`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -191,7 +205,8 @@ class ExpenseTracker {
 
     async deleteExpense(expenseId) {
         try {
-            const response = await fetch(`http://localhost:8080/api/expenses/${expenseId}`, {
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/expenses/${expenseId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -481,7 +496,8 @@ class ExpenseTracker {
 
     async loadExchangeRates() {
         try {
-            const response = await fetch('http://localhost:8080/api/exchange/rates?base=KRW', {
+            const apiBaseUrl = this.getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/exchange/rates?base=KRW`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
