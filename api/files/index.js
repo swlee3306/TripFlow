@@ -26,8 +26,9 @@ export default async function handler(req, res) {
       
       if (fileList) {
         const files = JSON.parse(fileList);
-        // Transform to match Go server format
-        const result = files.map(file => ({
+        // Transform to match Go server format with ID
+        const result = files.map((file, index) => ({
+          id: `file_${index}`,
           name: file.filename || file.Filename || file.name || 'unknown',
           size: file.size || file.Size || 0
         }));
