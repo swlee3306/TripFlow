@@ -70,6 +70,8 @@ class ExpenseTracker {
     async loadExpenses() {
         try {
             const apiBaseUrl = this.getApiBaseUrl();
+            console.log('🔍 Loading expenses from:', `${apiBaseUrl}/api/expenses`);
+            
             const response = await fetch(`${apiBaseUrl}/api/expenses`, {
                 method: 'GET',
                 headers: {
@@ -80,7 +82,9 @@ class ExpenseTracker {
             
             if (response.ok) {
                 const data = await response.json();
+                console.log('📊 Loaded expenses data:', data);
                 this.expenses = data.expenses || [];
+                console.log('📋 Current expenses count:', this.expenses.length);
                 this.updateExpenseList();
                 this.updateCharts();
             } else {
@@ -155,14 +159,24 @@ class ExpenseTracker {
             });
 
             if (response.ok) {
-                this.expenses.push(expense);
+                const result = await response.json();
+                console.log('✅ Expense added successfully:', result);
+                
+                // Use the expense data returned from server (with server-assigned ID)
+                const serverExpense = result.expense || expense;
+                this.expenses.push(serverExpense);
+                
+                // Refresh all data to ensure consistency
+                await this.loadExpenses();
                 this.updateExpenseList();
                 this.updateSummary();
                 this.updateCharts();
                 this.clearForm();
                 this.showSuccess('지출이 추가되었습니다.');
             } else {
-                throw new Error('Failed to add expense');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ Add failed:', response.status, response.statusText, errorData);
+                throw new Error(`Failed to add expense: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
             console.error('Error adding expense:', error);
@@ -215,7 +229,11 @@ class ExpenseTracker {
             });
 
             if (response.ok) {
+                // Remove from local array
                 this.expenses = this.expenses.filter(expense => expense.id !== expenseId);
+                
+                // Refresh all data to ensure consistency
+                await this.loadExpenses();
                 this.updateExpenseList();
                 this.updateSummary();
                 this.updateCharts();
