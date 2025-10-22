@@ -72,6 +72,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler()
 	fileHandler := handlers.NewFileHandler(fileStorage, db)
 	scheduleHandler := handlers.NewScheduleHandler(scheduleRepo, fileStorage)
+	exchangeHandler := handlers.NewExchangeHandler()
 
 	// Public routes with rate limiting
 	api := router.Group("/api")
@@ -99,6 +100,10 @@ func main() {
 		api.GET("/schedules", scheduleHandler.ListSchedules)
 		api.GET("/schedules/:id", scheduleHandler.GetSchedule)
 		api.POST("/schedules/:id/share", scheduleHandler.IncrementShareCount)
+
+		// Exchange rate routes
+		api.GET("/exchange/rates", exchangeHandler.GetExchangeRates)
+		api.GET("/exchange/convert", exchangeHandler.ConvertCurrency)
 	}
 
 	// Protected routes (require authentication and CSRF protection)
