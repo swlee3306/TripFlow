@@ -69,8 +69,11 @@ func initRouter() {
 	// Initialize Redis connection
 	initRedis()
 
-	// Exchange Rate API
-	api.GET("/exchange/rates", func(c *gin.Context) {
+	// Simple API routes
+	api := router.Group("/api")
+	{
+		// Exchange Rate API
+		api.GET("/exchange/rates", func(c *gin.Context) {
 		base := c.Query("base")
 		if base == "" {
 			base = "KRW"
@@ -315,9 +318,6 @@ func initRouter() {
 		})
 	})
 
-	// Simple API routes
-	api := router.Group("/api")
-	{
 		api.GET("/schedules", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"schedules": []gin.H{},
