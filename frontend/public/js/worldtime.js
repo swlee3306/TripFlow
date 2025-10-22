@@ -141,6 +141,75 @@ class WorldTimeDisplay {
         if (secondHand) {
             secondHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${secondAngle}deg)`;
         }
+        
+        // Update clock colors based on time of day
+        this.updateClockColors(hours);
+    }
+
+    updateClockColors(hours) {
+        const clockFace = document.querySelector('.absolute.inset-0.rounded-full.border-4');
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const secondHand = document.getElementById('second-hand');
+        
+        let timeOfDay, bgColor, borderColor, hourColor, minuteColor, secondColor;
+        
+        if (hours >= 0 && hours < 6) {
+            // 새벽 (00:00-06:00) - 어두운 파란색/보라색
+            timeOfDay = '새벽';
+            bgColor = 'linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%)';
+            borderColor = '#1e40af';
+            hourColor = '#e0e7ff';
+            minuteColor = '#c7d2fe';
+            secondColor = '#fbbf24';
+        } else if (hours >= 6 && hours < 12) {
+            // 오전 (06:00-12:00) - 밝은 파란색/하늘색
+            timeOfDay = '오전';
+            bgColor = 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)';
+            borderColor = '#0284c7';
+            hourColor = '#1e40af';
+            minuteColor = '#1d4ed8';
+            secondColor = '#dc2626';
+        } else if (hours >= 12 && hours < 18) {
+            // 오후 (12:00-18:00) - 주황색/노란색
+            timeOfDay = '오후';
+            bgColor = 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #fde047 100%)';
+            borderColor = '#d97706';
+            hourColor = '#92400e';
+            minuteColor = '#a16207';
+            secondColor = '#dc2626';
+        } else {
+            // 밤 (18:00-24:00) - 어두운 색/보라색
+            timeOfDay = '밤';
+            bgColor = 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%)';
+            borderColor = '#111827';
+            hourColor = '#f3f4f6';
+            minuteColor = '#d1d5db';
+            secondColor = '#fbbf24';
+        }
+        
+        // Apply colors to clock face
+        if (clockFace) {
+            clockFace.style.background = bgColor;
+            clockFace.style.borderColor = borderColor;
+        }
+        
+        // Apply colors to clock hands
+        if (hourHand) {
+            hourHand.style.backgroundColor = hourColor;
+        }
+        if (minuteHand) {
+            minuteHand.style.backgroundColor = minuteColor;
+        }
+        if (secondHand) {
+            secondHand.style.backgroundColor = secondColor;
+        }
+        
+        // Update time of day indicator
+        const timeIndicator = document.getElementById('time-of-day');
+        if (timeIndicator) {
+            timeIndicator.textContent = timeOfDay;
+        }
     }
 
     getTimezoneName(timezone) {
@@ -307,6 +376,65 @@ class WorldTimeDisplay {
         
         if (secondHand) {
             secondHand.style.transform = `translateX(-50%) translateY(-100%) rotate(${secondAngle}deg)`;
+        }
+        
+        // Update mini clock colors based on time of day
+        this.updateMiniClockColors(timezone, hours);
+    }
+
+    updateMiniClockColors(timezone, hours) {
+        const miniClockFace = document.querySelector(`[data-timezone="${timezone}"] .absolute.inset-0.rounded-full.border-2`);
+        const hourHand = document.querySelector(`[data-hour-hand="${timezone}"]`);
+        const minuteHand = document.querySelector(`[data-minute-hand="${timezone}"]`);
+        const secondHand = document.querySelector(`[data-second-hand="${timezone}"]`);
+        
+        let bgColor, borderColor, hourColor, minuteColor, secondColor;
+        
+        if (hours >= 0 && hours < 6) {
+            // 새벽 (00:00-06:00) - 어두운 파란색/보라색
+            bgColor = 'linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%)';
+            borderColor = '#1e40af';
+            hourColor = '#e0e7ff';
+            minuteColor = '#c7d2fe';
+            secondColor = '#fbbf24';
+        } else if (hours >= 6 && hours < 12) {
+            // 오전 (06:00-12:00) - 밝은 파란색/하늘색
+            bgColor = 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)';
+            borderColor = '#0284c7';
+            hourColor = '#1e40af';
+            minuteColor = '#1d4ed8';
+            secondColor = '#dc2626';
+        } else if (hours >= 12 && hours < 18) {
+            // 오후 (12:00-18:00) - 주황색/노란색
+            bgColor = 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #fde047 100%)';
+            borderColor = '#d97706';
+            hourColor = '#92400e';
+            minuteColor = '#a16207';
+            secondColor = '#dc2626';
+        } else {
+            // 밤 (18:00-24:00) - 어두운 색/보라색
+            bgColor = 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%)';
+            borderColor = '#111827';
+            hourColor = '#f3f4f6';
+            minuteColor = '#d1d5db';
+            secondColor = '#fbbf24';
+        }
+        
+        // Apply colors to mini clock face
+        if (miniClockFace) {
+            miniClockFace.style.background = bgColor;
+            miniClockFace.style.borderColor = borderColor;
+        }
+        
+        // Apply colors to mini clock hands
+        if (hourHand) {
+            hourHand.style.backgroundColor = hourColor;
+        }
+        if (minuteHand) {
+            minuteHand.style.backgroundColor = minuteColor;
+        }
+        if (secondHand) {
+            secondHand.style.backgroundColor = secondColor;
         }
     }
 
