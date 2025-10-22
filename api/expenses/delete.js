@@ -1,4 +1,4 @@
-// Vercel API Route for deleting expenses by ID
+// Vercel API Route for deleting expenses by ID (POST method to avoid routing issues)
 import { createClient } from 'redis';
 
 export default async function handler(req, res) {
@@ -14,33 +14,14 @@ export default async function handler(req, res) {
 
   try {
     console.log('🔍 DELETE request received:', req.method);
-    console.log('🔍 Query params:', req.query);
-    console.log('🔍 URL:', req.url);
+    console.log('🔍 Request body:', req.body);
     
-    if (req.method === 'DELETE') {
-      // Vercel dynamic routes: get ID from URL path
-      // Method 1: Try req.query first (standard way)
-      let id = req.query.id;
+    if (req.method === 'POST') {
+      const { id } = req.body;
       
-      // Method 2: If not in query, extract from URL
+      console.log('🔍 Expense ID from body:', id);
+      
       if (!id) {
-        const urlParts = req.url.split('/');
-        id = urlParts[urlParts.length - 1];
-      }
-      
-      // Method 3: Try to get from req.url directly
-      if (!id) {
-        const match = req.url.match(/\/api\/expenses\/(.+)$/);
-        if (match) {
-          id = match[1];
-        }
-      }
-      
-      console.log('🔍 Expense ID from query:', req.query.id);
-      console.log('🔍 Expense ID from URL parsing:', id);
-      console.log('🔍 Full URL:', req.url);
-      
-      if (!id || id === '') {
         console.log('❌ Missing expense ID');
         res.status(400).json({ error: 'Missing expense ID' });
         return;
@@ -75,6 +56,7 @@ export default async function handler(req, res) {
       // Save updated expenses list
       await redisClient.set('expenses:list', JSON.stringify(filteredExpenses));
       
+      console.log('✅ Expense deleted successfully:', id);
       res.status(200).json({
         message: 'Expense deleted successfully',
       });
