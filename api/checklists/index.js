@@ -12,6 +12,13 @@ export default async function handler(req, res) {
     return;
   }
 
+  console.log('Checklist index API called:', {
+    method: req.method,
+    url: req.url,
+    query: req.query,
+    body: req.body
+  });
+
   try {
     // Connect to Redis Cloud
     const redisClient = createClient({
