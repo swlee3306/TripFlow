@@ -997,10 +997,14 @@
                     });
 
                     if (response.ok) {
+                        console.log('Checklist deleted successfully');
                         alert('체크리스트가 삭제되었습니다.');
                         // 삭제 후 자동으로 목록 새로고침
+                        console.log('Refreshing saved checklists after deletion');
                         await this.loadSavedChecklists();
+                        console.log('Saved checklists refreshed');
                     } else {
+                        console.error('Delete request failed:', response.status, response.statusText);
                         throw new Error('삭제에 실패했습니다.');
                     }
                 } catch (error) {
