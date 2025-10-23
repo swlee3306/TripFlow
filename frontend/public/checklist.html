@@ -759,7 +759,11 @@
                     
                     const apiUrl = isLocalDev ? 'http://localhost:8080/api/checklists' : '/api/checklists';
                     
+                    console.log('Loading checklists from:', apiUrl);
+                    
                     const response = await fetch(apiUrl);
+                    console.log('Response status:', response.status);
+                    
                     if (response.ok) {
                         const data = await response.json();
                         console.log('API Response:', data);
@@ -775,10 +779,15 @@
                             checklists = data;
                         }
                         
+                        console.log('Processed checklists:', checklists);
                         this.displaySavedChecklists(checklists);
+                    } else {
+                        console.error('API request failed:', response.status, response.statusText);
+                        this.displaySavedChecklists([]);
                     }
                 } catch (error) {
                     console.error('Error loading checklists:', error);
+                    this.displaySavedChecklists([]);
                 }
             }
 
@@ -819,12 +828,37 @@
                         const createdAt = checklist.createdAt || new Date().toISOString();
                         const id = checklist.id || 'unknown';
                         
+                        // 타입과 기간 이름을 직접 매핑
+                        const typeNames = {
+                            'domestic': '국내 여행',
+                            'international': '해외 여행',
+                            'business': '출장',
+                            'backpacking': '배낭여행',
+                            'family': '가족여행',
+                            'honeymoon': '신혼여행',
+                            'solo': '솔로 여행',
+                            'group': '그룹 여행',
+                            'adventure': '모험 여행',
+                            'luxury': '럭셔리 여행'
+                        };
+                        
+                        const durationNames = {
+                            'day-trip': '당일치기',
+                            'weekend': '주말여행',
+                            'short': '짧은 여행',
+                            'medium': '중간 여행',
+                            'long': '긴 여행'
+                        };
+                        
+                        const typeName = typeNames[type] || type;
+                        const durationName = durationNames[duration] || duration;
+                        
                         return `
                             <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="travelChecklist.loadChecklist('${id}')">
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <h4 class="font-medium text-gray-900">${name}</h4>
-                                        <p class="text-sm text-gray-600">${this.getTypeName(type)} • ${this.getDurationName(duration)}</p>
+                                        <p class="text-sm text-gray-600">${typeName} • ${durationName}</p>
                                         <p class="text-xs text-gray-500">${new Date(createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div class="flex space-x-2">
