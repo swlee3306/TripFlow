@@ -38,7 +38,11 @@
       "dest": "/api/files/[filename].js"
     },
     {
-      "src": "/api/checklists/(.*)",
+      "src": "/api/checklists/([^/]+)",
+      "dest": "/api/checklists/[id].js"
+    },
+    {
+      "src": "/api/checklists",
       "dest": "/api/checklists/index.js"
     },
     {
