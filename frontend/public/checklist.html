@@ -600,40 +600,71 @@
             }
 
             displayChecklist() {
-                const display = document.getElementById('checklist-display');
-                const title = document.getElementById('checklist-title');
-                const subtitle = document.getElementById('checklist-subtitle');
-                const categories = document.getElementById('checklist-categories');
+                try {
+                    console.log('Displaying checklist:', this.currentChecklist);
+                    
+                    const display = document.getElementById('checklist-display');
+                    const title = document.getElementById('checklist-title');
+                    const subtitle = document.getElementById('checklist-subtitle');
+                    const categories = document.getElementById('checklist-categories');
 
-                display.classList.remove('hidden');
+                    if (!display || !title || !subtitle || !categories) {
+                        console.error('Required DOM elements not found');
+                        return;
+                    }
 
-                title.textContent = this.currentChecklist.name;
-                subtitle.textContent = `${this.getTypeName(this.currentChecklist.type)} • ${this.getDurationName(this.currentChecklist.duration)}`;
+                    display.classList.remove('hidden');
 
-                categories.innerHTML = '';
-                Object.keys(this.currentChecklist.items).forEach(category => {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'bg-white rounded-lg shadow p-6';
-                    categoryDiv.innerHTML = `
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">${category}</h4>
-                        <div class="space-y-2">
-                            ${this.currentChecklist.items[category].map(item => `
-                                <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                    <input type="checkbox" 
-                                           class="checklist-item h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                           data-category="${category}" 
-                                           data-item="${item}"
-                                           ${this.currentChecklist.completed[category][item] ? 'checked' : ''}>
-                                    <span class="text-gray-700">${item}</span>
-                                </label>
-                            `).join('')}
-                        </div>
-                    `;
-                    categories.appendChild(categoryDiv);
-                });
+                    title.textContent = this.currentChecklist.name || '이름 없음';
+                    subtitle.textContent = `${this.getTypeName(this.currentChecklist.type)} • ${this.getDurationName(this.currentChecklist.duration)}`;
 
-                // Add event listeners to checkboxes
-                this.setupCheckboxListeners();
+                    categories.innerHTML = '';
+                    
+                    if (this.currentChecklist.items && typeof this.currentChecklist.items === 'object') {
+                        Object.keys(this.currentChecklist.items).forEach(category => {
+                            const categoryDiv = document.createElement('div');
+                            categoryDiv.className = 'bg-white rounded-lg shadow p-6';
+                            
+                            const items = this.currentChecklist.items[category];
+                            if (Array.isArray(items)) {
+                                categoryDiv.innerHTML = `
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-4">${category}</h4>
+                                    <div class="space-y-2">
+                                        ${items.map(item => {
+                                            const isCompleted = this.currentChecklist.completed && 
+                                                             this.currentChecklist.completed[category] && 
+                                                             this.currentChecklist.completed[category][item];
+                                            return `
+                                                <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                                    <input type="checkbox" 
+                                                           class="checklist-item h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                           data-category="${category}" 
+                                                           data-item="${item}"
+                                                           ${isCompleted ? 'checked' : ''}>
+                                                    <span class="text-gray-700">${item}</span>
+                                                </label>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                `;
+                            } else {
+                                categoryDiv.innerHTML = `
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-4">${category}</h4>
+                                    <p class="text-gray-500">항목이 없습니다.</p>
+                                `;
+                            }
+                            categories.appendChild(categoryDiv);
+                        });
+                    } else {
+                        categories.innerHTML = '<p class="text-gray-500">체크리스트 항목이 없습니다.</p>';
+                    }
+
+                    // Add event listeners to checkboxes
+                    this.setupCheckboxListeners();
+                } catch (error) {
+                    console.error('Error displaying checklist:', error);
+                    alert('체크리스트를 표시하는 중 오류가 발생했습니다.');
+                }
             }
 
             setupCheckboxListeners() {
@@ -896,19 +927,50 @@
                     
                     const apiUrl = isLocalDev ? `http://localhost:8080/api/checklists/${id}` : `/api/checklists/${id}`;
                     
+                    console.log('Loading checklist from:', apiUrl);
+                    
                     const response = await fetch(apiUrl);
+                    console.log('Response status:', response.status);
+                    
                     if (response.ok) {
                         const data = await response.json();
+                        console.log('API Response:', data);
+                        
                         // Go API 응답 구조: { success: true, data: {...} }
                         // Vercel API 응답 구조: 직접 객체 반환
                         const checklist = data.data || data.checklist || data;
+                        console.log('Processed checklist:', checklist);
+                        
+                        // completed 객체가 없으면 초기화
+                        if (!checklist.completed) {
+                            checklist.completed = {};
+                        }
+                        
+                        // 각 카테고리의 completed 상태 초기화
+                        if (checklist.items) {
+                            Object.keys(checklist.items).forEach(category => {
+                                if (!checklist.completed[category]) {
+                                    checklist.completed[category] = {};
+                                }
+                                // 각 아이템의 completed 상태 초기화
+                                checklist.items[category].forEach(item => {
+                                    if (checklist.completed[category][item] === undefined) {
+                                        checklist.completed[category][item] = false;
+                                    }
+                                });
+                            });
+                        }
+                        
                         this.currentChecklist = checklist;
+                        console.log('Current checklist set:', this.currentChecklist);
+                        
                         this.displayChecklist();
                         this.updateProgress();
                         document.getElementById('checklist-display').scrollIntoView({ behavior: 'smooth' });
                         // 불러온 후 목록도 새로고침
                         await this.loadSavedChecklists();
                     } else {
+                        console.error('API request failed:', response.status, response.statusText);
                         alert('체크리스트를 불러올 수 없습니다.');
                     }
                 } catch (error) {
