@@ -992,11 +992,17 @@
                     
                     const apiUrl = isLocalDev ? `http://localhost:8080/api/checklists/${id}` : `/api/checklists/${id}`;
                     
+                    console.log('Deleting checklist:', id, 'from:', apiUrl);
+                    
                     const response = await fetch(apiUrl, {
                         method: 'DELETE'
                     });
 
+                    console.log('Delete response status:', response.status);
+                    
                     if (response.ok) {
+                        const responseData = await response.json();
+                        console.log('Delete response data:', responseData);
                         console.log('Checklist deleted successfully');
                         alert('체크리스트가 삭제되었습니다.');
                         // 삭제 후 자동으로 목록 새로고침
@@ -1004,7 +1010,8 @@
                         await this.loadSavedChecklists();
                         console.log('Saved checklists refreshed');
                     } else {
-                        console.error('Delete request failed:', response.status, response.statusText);
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('Delete request failed:', response.status, response.statusText, errorData);
                         throw new Error('삭제에 실패했습니다.');
                     }
                 } catch (error) {
