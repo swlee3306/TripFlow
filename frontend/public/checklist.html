@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>여행 체크리스트 - TripFlow</title>
+    <meta name="description" content="여행 준비를 위한 체크리스트를 만들어보세요">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23059669' d='M16 2L4 8v16l12 6 12-6V8L16 2z'/><path fill='%23ffffff' d='M12 14h8v4h-8z'/></svg>">
+    
+    <!-- Tailwind CSS -->
+    <link href="./css/output.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-900">TripFlow</h1>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">홈</a>
+                    <a href="/exchange.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">환율 계산기</a>
+                    <a href="/worldtime.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">세계 시간</a>
+                    <a href="/expense.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">여행 가계부</a>
+                    <a href="/checklist.html" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium">체크리스트</a>
+                </nav>
+
+                <!-- Mobile menu button -->
+                <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div id="mobile-menu" class="hidden md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 rounded-lg mt-2">
+                    <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">홈</a>
+                    <a href="/exchange.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">환율 계산기</a>
+                    <a href="/worldtime.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">세계 시간</a>
+                    <a href="/expense.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">여행 가계부</a>
+                    <a href="/checklist.html" class="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white">체크리스트</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">여행 체크리스트</h2>
+            <p class="text-gray-600">여행 준비를 위한 체크리스트를 만들어보세요</p>
+        </div>
+
+        <!-- Checklist Setup Form -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">체크리스트 설정</h3>
+            <form id="checklist-setup-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="checklist-name" class="block text-sm font-medium text-gray-700 mb-2">체크리스트 이름</label>
+                    <input type="text" id="checklist-name" placeholder="예: 제주도 3박 4일 여행" 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="trip-type" class="block text-sm font-medium text-gray-700 mb-2">여행 유형</label>
+                    <select id="trip-type" class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <option value="">여행 유형 선택</option>
+                        <option value="domestic">🏠 국내 여행</option>
+                        <option value="international">✈️ 해외 여행</option>
+                        <option value="business">💼 출장</option>
+                        <option value="backpacking">🎒 배낭여행</option>
+                        <option value="family">👨‍👩‍👧‍👦 가족여행</option>
+                        <option value="honeymoon">💕 신혼여행</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="trip-duration" class="block text-sm font-medium text-gray-700 mb-2">여행 기간</label>
+                    <select id="trip-duration" class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <option value="">여행 기간 선택</option>
+                        <option value="day-trip">당일치기</option>
+                        <option value="weekend">주말여행 (2-3일)</option>
+                        <option value="short">짧은 여행 (4-7일)</option>
+                        <option value="medium">중간 여행 (1-2주)</option>
+                        <option value="long">긴 여행 (2주 이상)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>체크리스트 생성하기
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Checklist Display -->
+        <div id="checklist-display" class="hidden">
+            <!-- Checklist Header -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 id="checklist-title" class="text-2xl font-bold text-gray-900">체크리스트 제목</h3>
+                        <p id="checklist-subtitle" class="text-gray-600">체크리스트 부제목</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="save-checklist" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>저장
+                        </button>
+                        <button id="load-checklist" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-download mr-2"></i>불러오기
+                        </button>
+                        <button id="new-checklist" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>새로 만들기
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>진행률</span>
+                        <span id="progress-text">0 / 0 완료</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checklist Categories -->
+            <div id="checklist-categories" class="space-y-6">
+                <!-- Categories will be populated here -->
+            </div>
+
+            <!-- Add Custom Item -->
+            <div class="bg-white rounded-lg shadow p-6 mt-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">사용자 정의 항목 추가</h4>
+                <div class="flex space-x-4">
+                    <input type="text" id="custom-item" placeholder="새로운 체크리스트 항목을 입력하세요" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <select id="custom-category" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="기타">기타</option>
+                    </select>
+                    <button id="add-custom-item" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>추가
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Checklists -->
+        <div id="saved-checklists" class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">저장된 체크리스트</h3>
+            <div id="saved-list" class="space-y-3">
+                <!-- Saved checklists will be populated here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-500">
+                <p>&copy; 2025 TripFlow. 체크리스트는 참고용입니다.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Travel Checklist Application
+        class TravelChecklist {
+            constructor() {
+                this.currentChecklist = null;
+                this.checklistData = {
+                    domestic: {
+                        '여행 준비': [
+                            '여행 계획 세우기',
+                            '숙소 예약',
+                            '교통편 예약',
+                            '여행 보험 가입',
+                            '현금 및 카드 준비'
+                        ],
+                        '짐 준비': [
+                            '여행 가방 준비',
+                            '의류 (날씨별)',
+                            '세면도구',
+                            '약품 (상비약)',
+                            '충전기 및 어댑터',
+                            '여권 및 신분증'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '우편물 정리',
+                            '반려동물 케어',
+                            '여행지 날씨 확인',
+                            '비상 연락처 준비'
+                        ]
+                    },
+                    international: {
+                        '여행 준비': [
+                            '여행 계획 세우기',
+                            '숙소 예약',
+                            '항공권 예약',
+                            '여행 보험 가입',
+                            '비자 발급',
+                            '여권 유효기간 확인'
+                        ],
+                        '짐 준비': [
+                            '여행 가방 준비',
+                            '의류 (날씨별)',
+                            '세면도구',
+                            '약품 (상비약)',
+                            '충전기 및 어댑터',
+                            '여권 및 비자',
+                            '국제면허증',
+                            '여행지 통화'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '우편물 정리',
+                            '반려동물 케어',
+                            '여행지 날씨 확인',
+                            '비상 연락처 준비',
+                            '현지 법규 확인',
+                            '건강상태 점검'
+                        ]
+                    },
+                    business: {
+                        '출장 준비': [
+                            '출장 계획 수립',
+                            '숙소 예약',
+                            '교통편 예약',
+                            '회의 자료 준비',
+                            '비즈니스 복장'
+                        ],
+                        '짐 준비': [
+                            '비즈니스 가방',
+                            '정장 및 셔츠',
+                            '노트북 및 충전기',
+                            '명함',
+                            '회의 자료'
+                        ],
+                        '출발 전': [
+                            '업무 인수인계',
+                            '일정 확인',
+                            '연락처 준비',
+                            '여행지 정보 확인'
+                        ]
+                    },
+                    backpacking: {
+                        '여행 준비': [
+                            '여행 계획 세우기',
+                            '숙소 예약',
+                            '교통편 예약',
+                            '여행 보험 가입',
+                            '예산 계획'
+                        ],
+                        '배낭 준비': [
+                            '배낭 및 등산화',
+                            '기능성 의류',
+                            '세면도구 (미니)',
+                            '응급처치 키트',
+                            '충전기 및 파워뱅크',
+                            '여권 및 신분증'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '여행지 정보 수집',
+                            '비상 연락처 준비',
+                            '건강상태 점검'
+                        ]
+                    },
+                    family: {
+                        '여행 준비': [
+                            '가족 여행 계획',
+                            '숙소 예약',
+                            '교통편 예약',
+                            '여행 보험 가입',
+                            '아이들 준비물'
+                        ],
+                        '짐 준비': [
+                            '가족 여행 가방',
+                            '아이들 의류',
+                            '세면도구',
+                            '약품 (아이용)',
+                            '장난감 및 놀이용품',
+                            '충전기 및 어댑터'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '아이들 건강상태 확인',
+                            '여행지 정보 확인',
+                            '비상 연락처 준비'
+                        ]
+                    },
+                    honeymoon: {
+                        '신혼여행 준비': [
+                            '신혼여행 계획',
+                            '로맨틱 숙소 예약',
+                            '교통편 예약',
+                            '여행 보험 가입',
+                            '특별한 경험 예약'
+                        ],
+                        '짐 준비': [
+                            '신혼여행 가방',
+                            '로맨틱 의류',
+                            '세면도구',
+                            '카메라 및 충전기',
+                            '특별한 소품',
+                            '여권 및 신분증'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '여행지 정보 확인',
+                            '특별한 계획 준비',
+                            '비상 연락처 준비'
+                        ]
+                    }
+                };
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadSavedChecklists();
+            }
+
+            setupEventListeners() {
+                // Mobile menu toggle
+                const mobileMenuButton = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                
+                if (mobileMenuButton && mobileMenu) {
+                    mobileMenuButton.addEventListener('click', () => {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+
+                // Checklist setup form
+                const setupForm = document.getElementById('checklist-setup-form');
+                if (setupForm) {
+                    setupForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.createChecklist();
+                    });
+                }
+
+                // Save checklist
+                const saveButton = document.getElementById('save-checklist');
+                if (saveButton) {
+                    saveButton.addEventListener('click', () => {
+                        this.saveChecklist();
+                    });
+                }
+
+                // Load checklist
+                const loadButton = document.getElementById('load-checklist');
+                if (loadButton) {
+                    loadButton.addEventListener('click', () => {
+                        this.showLoadModal();
+                    });
+                }
+
+                // New checklist
+                const newButton = document.getElementById('new-checklist');
+                if (newButton) {
+                    newButton.addEventListener('click', () => {
+                        this.resetChecklist();
+                    });
+                }
+
+                // Add custom item
+                const addCustomButton = document.getElementById('add-custom-item');
+                if (addCustomButton) {
+                    addCustomButton.addEventListener('click', () => {
+                        this.addCustomItem();
+                    });
+                }
+            }
+
+            createChecklist() {
+                const name = document.getElementById('checklist-name').value;
+                const type = document.getElementById('trip-type').value;
+                const duration = document.getElementById('trip-duration').value;
+
+                if (!name || !type || !duration) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
+
+                this.currentChecklist = {
+                    name: name,
+                    type: type,
+                    duration: duration,
+                    items: {},
+                    completed: {},
+                    createdAt: new Date().toISOString()
+                };
+
+                this.generateChecklistItems();
+                this.displayChecklist();
+                this.updateProgress();
+            }
+
+            generateChecklistItems() {
+                const type = this.currentChecklist.type;
+                const baseItems = this.checklistData[type] || this.checklistData.domestic;
+                
+                // Add duration-specific items
+                const durationItems = this.getDurationSpecificItems(this.currentChecklist.duration);
+                
+                this.currentChecklist.items = {
+                    ...baseItems,
+                    ...durationItems
+                };
+
+                // Initialize completed status
+                this.currentChecklist.completed = {};
+                Object.keys(this.currentChecklist.items).forEach(category => {
+                    this.currentChecklist.completed[category] = {};
+                    this.currentChecklist.items[category].forEach(item => {
+                        this.currentChecklist.completed[category][item] = false;
+                    });
+                });
+            }
+
+            getDurationSpecificItems(duration) {
+                const durationItems = {
+                    'day-trip': {
+                        '당일 여행': [
+                            '간단한 간식',
+                            '물병',
+                            '휴대폰 충전기',
+                            '현금'
+                        ]
+                    },
+                    'weekend': {
+                        '주말 여행': [
+                            '추가 의류',
+                            '여분의 충전기',
+                            '간단한 약품'
+                        ]
+                    },
+                    'short': {
+                        '짧은 여행': [
+                            '여분의 의류',
+                            '세탁용품',
+                            '여행 가이드북'
+                        ]
+                    },
+                    'medium': {
+                        '중간 여행': [
+                            '다양한 의류',
+                            '세탁용품',
+                            '여행 가이드북',
+                            '현지 통화',
+                            '여행용 어댑터'
+                        ]
+                    },
+                    'long': {
+                        '긴 여행': [
+                            '다양한 의류',
+                            '세탁용품',
+                            '여행 가이드북',
+                            '현지 통화',
+                            '여행용 어댑터',
+                            '장기 여행 보험',
+                            '의료 기록'
+                        ]
+                    }
+                };
+
+                return durationItems[duration] || {};
+            }
+
+            displayChecklist() {
+                const display = document.getElementById('checklist-display');
+                const title = document.getElementById('checklist-title');
+                const subtitle = document.getElementById('checklist-subtitle');
+                const categories = document.getElementById('checklist-categories');
+
+                display.classList.remove('hidden');
+
+                title.textContent = this.currentChecklist.name;
+                subtitle.textContent = `${this.getTypeName(this.currentChecklist.type)} • ${this.getDurationName(this.currentChecklist.duration)}`;
+
+                categories.innerHTML = '';
+                Object.keys(this.currentChecklist.items).forEach(category => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'bg-white rounded-lg shadow p-6';
+                    categoryDiv.innerHTML = `
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">${category}</h4>
+                        <div class="space-y-2">
+                            ${this.currentChecklist.items[category].map(item => `
+                                <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                    <input type="checkbox" 
+                                           class="checklist-item h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                           data-category="${category}" 
+                                           data-item="${item}"
+                                           ${this.currentChecklist.completed[category][item] ? 'checked' : ''}>
+                                    <span class="text-gray-700">${item}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                    categories.appendChild(categoryDiv);
+                });
+
+                // Add event listeners to checkboxes
+                this.setupCheckboxListeners();
+            }
+
+            setupCheckboxListeners() {
+                const checkboxes = document.querySelectorAll('.checklist-item');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const category = e.target.dataset.category;
+                        const item = e.target.dataset.item;
+                        this.currentChecklist.completed[category][item] = e.target.checked;
+                        this.updateProgress();
+                    });
+                });
+            }
+
+            updateProgress() {
+                let totalItems = 0;
+                let completedItems = 0;
+
+                Object.keys(this.currentChecklist.completed).forEach(category => {
+                    Object.keys(this.currentChecklist.completed[category]).forEach(item => {
+                        totalItems++;
+                        if (this.currentChecklist.completed[category][item]) {
+                            completedItems++;
+                        }
+                    });
+                });
+
+                const progressText = document.getElementById('progress-text');
+                const progressBar = document.getElementById('progress-bar');
+                const percentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+
+                progressText.textContent = `${completedItems} / ${totalItems} 완료`;
+                progressBar.style.width = `${percentage}%`;
+            }
+
+            addCustomItem() {
+                const customItem = document.getElementById('custom-item').value;
+                const customCategory = document.getElementById('custom-category').value;
+
+                if (!customItem.trim()) {
+                    alert('항목을 입력해주세요.');
+                    return;
+                }
+
+                if (!this.currentChecklist.items[customCategory]) {
+                    this.currentChecklist.items[customCategory] = [];
+                    this.currentChecklist.completed[customCategory] = {};
+                }
+
+                this.currentChecklist.items[customCategory].push(customItem);
+                this.currentChecklist.completed[customCategory][customItem] = false;
+
+                // Update category dropdown
+                this.updateCategoryDropdown();
+
+                // Refresh display
+                this.displayChecklist();
+                this.updateProgress();
+
+                // Clear input
+                document.getElementById('custom-item').value = '';
+            }
+
+            updateCategoryDropdown() {
+                const categorySelect = document.getElementById('custom-category');
+                const currentValue = categorySelect.value;
+                
+                categorySelect.innerHTML = '<option value="기타">기타</option>';
+                Object.keys(this.currentChecklist.items).forEach(category => {
+                    if (category !== '기타') {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categorySelect.appendChild(option);
+                    }
+                });
+                categorySelect.value = currentValue;
+            }
+
+            async saveChecklist() {
+                if (!this.currentChecklist) {
+                    alert('저장할 체크리스트가 없습니다.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/checklists', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.currentChecklist)
+                    });
+
+                    if (response.ok) {
+                        alert('체크리스트가 저장되었습니다.');
+                        this.loadSavedChecklists();
+                    } else {
+                        throw new Error('저장에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error saving checklist:', error);
+                    alert('저장 중 오류가 발생했습니다.');
+                }
+            }
+
+            async loadSavedChecklists() {
+                try {
+                    const response = await fetch('/api/checklists');
+                    if (response.ok) {
+                        const checklists = await response.json();
+                        this.displaySavedChecklists(checklists);
+                    }
+                } catch (error) {
+                    console.error('Error loading checklists:', error);
+                }
+            }
+
+            displaySavedChecklists(checklists) {
+                const savedList = document.getElementById('saved-list');
+                if (checklists.length === 0) {
+                    savedList.innerHTML = '<p class="text-gray-500">저장된 체크리스트가 없습니다.</p>';
+                    return;
+                }
+
+                savedList.innerHTML = checklists.map(checklist => `
+                    <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="travelChecklist.loadChecklist('${checklist.id}')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-medium text-gray-900">${checklist.name}</h4>
+                                <p class="text-sm text-gray-600">${this.getTypeName(checklist.type)} • ${this.getDurationName(checklist.duration)}</p>
+                                <p class="text-xs text-gray-500">${new Date(checklist.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="event.stopPropagation(); travelChecklist.deleteChecklist('${checklist.id}')" 
+                                        class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async loadChecklist(id) {
+                try {
+                    const response = await fetch(`/api/checklists/${id}`);
+                    if (response.ok) {
+                        const checklist = await response.json();
+                        this.currentChecklist = checklist;
+                        this.displayChecklist();
+                        this.updateProgress();
+                        document.getElementById('checklist-display').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert('체크리스트를 불러올 수 없습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error loading checklist:', error);
+                    alert('체크리스트를 불러오는 중 오류가 발생했습니다.');
+                }
+            }
+
+            async deleteChecklist(id) {
+                if (!confirm('정말로 이 체크리스트를 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/checklists/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('체크리스트가 삭제되었습니다.');
+                        this.loadSavedChecklists();
+                    } else {
+                        throw new Error('삭제에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error deleting checklist:', error);
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            }
+
+            resetChecklist() {
+                document.getElementById('checklist-setup-form').reset();
+                document.getElementById('checklist-display').classList.add('hidden');
+                this.currentChecklist = null;
+            }
+
+            getTypeName(type) {
+                const typeNames = {
+                    'domestic': '국내 여행',
+                    'international': '해외 여행',
+                    'business': '출장',
+                    'backpacking': '배낭여행',
+                    'family': '가족여행',
+                    'honeymoon': '신혼여행'
+                };
+                return typeNames[type] || type;
+            }
+
+            getDurationName(duration) {
+                const durationNames = {
+                    'day-trip': '당일치기',
+                    'weekend': '주말여행',
+                    'short': '짧은 여행',
+                    'medium': '중간 여행',
+                    'long': '긴 여행'
+                };
+                return durationNames[duration] || duration;
+            }
+        }
+
+        // Initialize the application
+        let travelChecklist;
+        document.addEventListener('DOMContentLoaded', () => {
+            travelChecklist = new TravelChecklist();
+        });
+    </script>
+</body>
+</html>

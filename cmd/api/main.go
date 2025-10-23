@@ -95,6 +95,7 @@ func main() {
 	scheduleHandler := handlers.NewScheduleHandler(scheduleRepo, fileStorage)
 	exchangeHandler := handlers.NewExchangeHandler()
 	expenseHandler := handlers.NewExpenseHandler(redisClient)
+	checklistHandler := handlers.NewChecklistHandler(redisClient)
 
 	// Public routes with rate limiting
 	api := router.Group("/api")
@@ -134,6 +135,13 @@ func main() {
 		api.GET("/expenses/budget", expenseHandler.GetBudget)
 		api.POST("/expenses/budget", expenseHandler.SetBudget)
 		api.GET("/expenses/stats", expenseHandler.GetExpenseStats)
+
+		// Checklist routes
+		api.GET("/checklists", checklistHandler.GetChecklists)
+		api.POST("/checklists", checklistHandler.CreateChecklist)
+		api.GET("/checklists/:id", checklistHandler.GetChecklist)
+		api.PUT("/checklists/:id", checklistHandler.UpdateChecklist)
+		api.DELETE("/checklists/:id", checklistHandler.DeleteChecklist)
 	}
 
 	// Protected routes (require authentication and CSRF protection)
