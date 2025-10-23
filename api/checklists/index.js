@@ -43,8 +43,11 @@ export default async function handler(req, res) {
       // Sort by creation date (newest first)
       checklists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
+      console.log('Returning checklists:', checklists);
+      
       res.status(200).json({
         checklists: checklists,
+        message: 'Checklists loaded successfully'
       });
     } else if (req.method === 'POST') {
       // Create new checklist

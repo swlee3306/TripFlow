@@ -785,6 +785,8 @@
             displaySavedChecklists(checklists) {
                 const savedList = document.getElementById('saved-list');
                 
+                console.log('Displaying checklists:', checklists);
+                
                 // checklists가 배열인지 확인
                 if (!Array.isArray(checklists) || checklists.length === 0) {
                     savedList.innerHTML = `
@@ -808,23 +810,47 @@
                     return;
                 }
 
-                savedList.innerHTML = checklists.map(checklist => `
-                    <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="travelChecklist.loadChecklist('${checklist.id}')">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4 class="font-medium text-gray-900">${checklist.name}</h4>
-                                <p class="text-sm text-gray-600">${this.getTypeName(checklist.type)} • ${this.getDurationName(checklist.duration)}</p>
-                                <p class="text-xs text-gray-500">${new Date(checklist.createdAt).toLocaleDateString()}</p>
+                try {
+                    savedList.innerHTML = checklists.map(checklist => {
+                        // 안전하게 데이터 접근
+                        const name = checklist.name || '이름 없음';
+                        const type = checklist.type || 'domestic';
+                        const duration = checklist.duration || 'weekend';
+                        const createdAt = checklist.createdAt || new Date().toISOString();
+                        const id = checklist.id || 'unknown';
+                        
+                        return `
+                            <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="travelChecklist.loadChecklist('${id}')">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">${name}</h4>
+                                        <p class="text-sm text-gray-600">${this.getTypeName(type)} • ${this.getDurationName(duration)}</p>
+                                        <p class="text-xs text-gray-500">${new Date(createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="event.stopPropagation(); travelChecklist.deleteChecklist('${id}')" 
+                                                class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex space-x-2">
-                                <button onclick="event.stopPropagation(); travelChecklist.deleteChecklist('${checklist.id}')" 
-                                        class="text-red-600 hover:text-red-800">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                        `;
+                    }).join('');
+                } catch (error) {
+                    console.error('Error rendering checklists:', error);
+                    savedList.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="text-red-400 mb-4">
+                                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                             </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">체크리스트 표시 중 오류가 발생했습니다</h3>
+                            <p class="text-gray-500 mb-4">페이지를 새로고침해주세요.</p>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }
             }
 
             async loadChecklist(id) {
