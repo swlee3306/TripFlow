@@ -787,7 +787,24 @@
                 
                 // checklists가 배열인지 확인
                 if (!Array.isArray(checklists) || checklists.length === 0) {
-                    savedList.innerHTML = '<p class="text-gray-500">저장된 체크리스트가 없습니다.</p>';
+                    savedList.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="text-gray-400 mb-4">
+                                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">저장된 체크리스트가 없습니다</h3>
+                            <p class="text-gray-500 mb-4">새로운 체크리스트를 만들어보세요!</p>
+                            <button onclick="document.getElementById('checklist-setup-form').scrollIntoView({ behavior: 'smooth' })" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                새 체크리스트 만들기
+                            </button>
+                        </div>
+                    `;
                     return;
                 }
 
