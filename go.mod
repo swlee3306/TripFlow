@@ -10,7 +10,6 @@ require (
 	github.com/gorilla/csrf v1.7.2
 	github.com/joho/godotenv v1.5.1
 	github.com/microcosm-cc/bluemonday v1.0.26
-	github.com/redis/go-redis/v9 v9.14.1
 	github.com/ulule/limiter/v3 v3.1.0
 	github.com/yuin/goldmark v1.6.0
 	go.uber.org/zap v1.26.0
