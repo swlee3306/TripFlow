@@ -84,6 +84,10 @@
                         <option value="backpacking">🎒 배낭여행</option>
                         <option value="family">👨‍👩‍👧‍👦 가족여행</option>
                         <option value="honeymoon">💕 신혼여행</option>
+                        <option value="solo">🚶‍♀️ 솔로여행</option>
+                        <option value="group">👥 그룹여행</option>
+                        <option value="adventure">🏔️ 모험여행</option>
+                        <option value="luxury">💎 럭셔리여행</option>
                     </select>
                 </div>
                 <div>
@@ -312,7 +316,9 @@
                             '로맨틱 숙소 예약',
                             '교통편 예약',
                             '여행 보험 가입',
-                            '특별한 경험 예약'
+                            '특별한 경험 예약',
+                            '신혼여행 예산 계획',
+                            '로맨틱 디너 예약'
                         ],
                         '짐 준비': [
                             '신혼여행 가방',
@@ -320,13 +326,120 @@
                             '세면도구',
                             '카메라 및 충전기',
                             '특별한 소품',
-                            '여권 및 신분증'
+                            '여권 및 신분증',
+                            '결혼반지 보관함'
                         ],
                         '출발 전': [
                             '집 안전 점검',
                             '여행지 정보 확인',
                             '특별한 계획 준비',
-                            '비상 연락처 준비'
+                            '비상 연락처 준비',
+                            '신혼여행 사진 계획'
+                        ]
+                    },
+                    solo: {
+                        '솔로 여행 준비': [
+                            '솔로 여행 계획',
+                            '숙소 예약 (안전한 곳)',
+                            '교통편 예약',
+                            '여행 보험 가입',
+                            '예산 계획',
+                            '안전 정보 수집'
+                        ],
+                        '짐 준비': [
+                            '솔로 여행 가방',
+                            '기능성 의류',
+                            '세면도구',
+                            '약품 (응급용)',
+                            '충전기 및 파워뱅크',
+                            '여권 및 신분증',
+                            '비상용품'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '여행지 정보 수집',
+                            '비상 연락처 준비',
+                            '건강상태 점검',
+                            '솔로 여행 안전 수칙 확인'
+                        ]
+                    },
+                    group: {
+                        '그룹 여행 준비': [
+                            '그룹 여행 계획',
+                            '숙소 예약 (그룹용)',
+                            '교통편 예약',
+                            '여행 보험 가입',
+                            '그룹 예산 계획',
+                            '역할 분담'
+                        ],
+                        '짐 준비': [
+                            '그룹 여행 가방',
+                            '의류 (활동별)',
+                            '세면도구',
+                            '약품 (공용)',
+                            '게임 및 엔터테인먼트',
+                            '충전기 및 어댑터',
+                            '여권 및 신분증',
+                            '그룹 사진용품'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '그룹 연락망 확인',
+                            '여행지 정보 공유',
+                            '비상 연락처 준비',
+                            '그룹 활동 계획'
+                        ]
+                    },
+                    adventure: {
+                        '모험 여행 준비': [
+                            '모험 여행 계획',
+                            '숙소 예약',
+                            '교통편 예약',
+                            '특수 여행 보험 가입',
+                            '장비 대여/구매',
+                            '안전 교육'
+                        ],
+                        '짐 준비': [
+                            '모험 여행 가방',
+                            '기능성 의류',
+                            '안전 장비',
+                            '응급처치 키트',
+                            '충전기 및 파워뱅크',
+                            '여권 및 신분증',
+                            '모험용 카메라'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '모험 활동 정보 수집',
+                            '비상 연락처 준비',
+                            '건강상태 점검',
+                            '안전 수칙 숙지'
+                        ]
+                    },
+                    luxury: {
+                        '럭셔리 여행 준비': [
+                            '럭셔리 여행 계획',
+                            '고급 숙소 예약',
+                            '교통편 예약 (1등급)',
+                            '프리미엄 여행 보험',
+                            '특별 서비스 예약',
+                            '럭셔리 예산 계획'
+                        ],
+                        '짐 준비': [
+                            '럭셔리 여행 가방',
+                            '고급 의류',
+                            '세면도구 (프리미엄)',
+                            '장신구',
+                            '카메라 및 충전기',
+                            '여권 및 신분증',
+                            '럭셔리 소품'
+                        ],
+                        '출발 전': [
+                            '집 안전 점검',
+                            '특별 서비스 확인',
+                            '여행지 정보 확인',
+                            '비상 연락처 준비',
+                            '럭셔리 경험 계획'
                         ]
                     }
                 };
@@ -607,7 +720,14 @@
                 }
 
                 try {
-                    const response = await fetch('/api/checklists', {
+                    // API URL 설정 - 로컬 개발 시에만 localhost:8080 사용
+                    const isLocalDev = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' ||
+                                     window.location.hostname === '0.0.0.0';
+                    
+                    const apiUrl = isLocalDev ? 'http://localhost:8080/api/checklists' : '/api/checklists';
+                    
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -629,7 +749,14 @@
 
             async loadSavedChecklists() {
                 try {
-                    const response = await fetch('/api/checklists');
+                    // API URL 설정 - 로컬 개발 시에만 localhost:8080 사용
+                    const isLocalDev = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' ||
+                                     window.location.hostname === '0.0.0.0';
+                    
+                    const apiUrl = isLocalDev ? 'http://localhost:8080/api/checklists' : '/api/checklists';
+                    
+                    const response = await fetch(apiUrl);
                     if (response.ok) {
                         const checklists = await response.json();
                         this.displaySavedChecklists(checklists);
@@ -667,7 +794,14 @@
 
             async loadChecklist(id) {
                 try {
-                    const response = await fetch(`/api/checklists/${id}`);
+                    // API URL 설정 - 로컬 개발 시에만 localhost:8080 사용
+                    const isLocalDev = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' ||
+                                     window.location.hostname === '0.0.0.0';
+                    
+                    const apiUrl = isLocalDev ? `http://localhost:8080/api/checklists/${id}` : `/api/checklists/${id}`;
+                    
+                    const response = await fetch(apiUrl);
                     if (response.ok) {
                         const checklist = await response.json();
                         this.currentChecklist = checklist;
@@ -689,7 +823,14 @@
                 }
 
                 try {
-                    const response = await fetch(`/api/checklists/${id}`, {
+                    // API URL 설정 - 로컬 개발 시에만 localhost:8080 사용
+                    const isLocalDev = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' ||
+                                     window.location.hostname === '0.0.0.0';
+                    
+                    const apiUrl = isLocalDev ? `http://localhost:8080/api/checklists/${id}` : `/api/checklists/${id}`;
+                    
+                    const response = await fetch(apiUrl, {
                         method: 'DELETE'
                     });
 
