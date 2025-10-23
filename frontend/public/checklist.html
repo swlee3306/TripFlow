@@ -736,6 +736,8 @@
                     });
 
                     if (response.ok) {
+                        const data = await response.json();
+                        console.log('Checklist saved successfully:', data);
                         alert('체크리스트가 저장되었습니다.');
                         this.loadSavedChecklists();
                     } else {
@@ -758,7 +760,20 @@
                     
                     const response = await fetch(apiUrl);
                     if (response.ok) {
-                        const checklists = await response.json();
+                        const data = await response.json();
+                        console.log('API Response:', data);
+                        
+                        // Go API 응답 구조: { success: true, data: [...] }
+                        // Vercel API 응답 구조: { checklists: [...] }
+                        let checklists = [];
+                        if (data.data && Array.isArray(data.data)) {
+                            checklists = data.data;
+                        } else if (data.checklists && Array.isArray(data.checklists)) {
+                            checklists = data.checklists;
+                        } else if (Array.isArray(data)) {
+                            checklists = data;
+                        }
+                        
                         this.displaySavedChecklists(checklists);
                     }
                 } catch (error) {
@@ -768,7 +783,9 @@
 
             displaySavedChecklists(checklists) {
                 const savedList = document.getElementById('saved-list');
-                if (checklists.length === 0) {
+                
+                // checklists가 배열인지 확인
+                if (!Array.isArray(checklists) || checklists.length === 0) {
                     savedList.innerHTML = '<p class="text-gray-500">저장된 체크리스트가 없습니다.</p>';
                     return;
                 }
@@ -803,7 +820,10 @@
                     
                     const response = await fetch(apiUrl);
                     if (response.ok) {
-                        const checklist = await response.json();
+                        const data = await response.json();
+                        // Go API 응답 구조: { success: true, data: {...} }
+                        // Vercel API 응답 구조: 직접 객체 반환
+                        const checklist = data.data || data.checklist || data;
                         this.currentChecklist = checklist;
                         this.displayChecklist();
                         this.updateProgress();
