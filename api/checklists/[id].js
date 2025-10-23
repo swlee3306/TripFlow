@@ -16,7 +16,8 @@ export default async function handler(req, res) {
     method: req.method,
     url: req.url,
     query: req.query,
-    body: req.body
+    body: req.body,
+    headers: req.headers
   });
 
   try {

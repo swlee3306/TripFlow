@@ -38,12 +38,12 @@
       "dest": "/api/files/[filename].js"
     },
     {
-      "src": "/api/checklists",
-      "dest": "/api/checklists/index.js"
-    },
-    {
       "src": "/api/checklists/([^/]+)",
       "dest": "/api/checklists/[id].js"
+    },
+    {
+      "src": "/api/checklists",
+      "dest": "/api/checklists/index.js"
     },
     {
       "src": "/markdown-files/(.*)",
