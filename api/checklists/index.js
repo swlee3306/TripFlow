@@ -1,5 +1,7 @@
-// Vercel API Route for checklists - Simple version
-export default function handler(req, res) {
+// Vercel API Route for checklists
+import { createClient } from 'redis';
+
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -11,28 +13,64 @@ export default function handler(req, res) {
   }
 
   try {
-    // Simple response for all requests
+    // Connect to Redis Cloud
+    const redisClient = createClient({
+      url: 'redis://default:27MKL27G0P2cVEUvV7WShJOMnbgtIbtK@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928'
+    });
+
+    await redisClient.connect();
+
     if (req.method === 'GET') {
+      // Get all checklists from Redis
+      const keys = await redisClient.keys('checklist:*');
+      const checklists = [];
+      
+      for (const key of keys) {
+        const checklistData = await redisClient.get(key);
+        if (checklistData) {
+          const checklist = JSON.parse(checklistData);
+          checklists.push(checklist);
+        }
+      }
+      
+      // Sort by creation date (newest first)
+      checklists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
       res.status(200).json({
-        checklists: [],
-        message: 'Checklists API is working!'
+        checklists: checklists,
       });
     } else if (req.method === 'POST') {
+      // Create new checklist
       const checklist = req.body;
+      
+      // Generate unique ID if not provided
+      if (!checklist.id) {
+        checklist.id = Date.now().toString();
+      }
+      
+      // Set creation date if not provided
+      if (!checklist.createdAt) {
+        checklist.createdAt = new Date().toISOString();
+      }
+      
+      // Calculate total items
+      if (checklist.items) {
+        checklist.total = checklist.items.length;
+        checklist.completed = 0; // Initialize completed count
+      }
+      
+      // Save to Redis with key pattern: checklist:id
+      await redisClient.set(`checklist:${checklist.id}`, JSON.stringify(checklist));
+      
       res.status(200).json({
         message: 'Checklist created successfully',
-        checklist: {
-          id: Date.now().toString(),
-          ...checklist,
-          createdAt: new Date().toISOString()
-        }
+        checklist: checklist,
       });
     } else {
-      res.status(200).json({
-        message: 'Checklist operation completed',
-        method: req.method
-      });
+      res.status(405).json({ error: 'Method not allowed' });
     }
+    
+    await redisClient.disconnect();
   } catch (error) {
     console.error('Error handling checklists:', error);
     res.status(500).json({ error: 'Internal server error' });
