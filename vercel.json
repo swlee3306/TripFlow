@@ -51,5 +51,10 @@
     }
   ],
   "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/public"
+  "outputDirectory": "frontend/public",
+  "functions": {
+    "api/checklists/index.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }
