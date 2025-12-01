@@ -8,6 +8,10 @@ function setCORSHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // 캐시 비활성화
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 }
 
 export default async function handler(req, res) {
@@ -49,15 +53,56 @@ export default async function handler(req, res) {
         return;
       }
 
-      // GET /api/files/by-id - Get file by ID (if needed)
+      // GET /api/files/by-id - Get file by ID
       if (req.method === 'GET' && isById) {
-        const { id } = req.query;
+        const id = url.searchParams.get('id');
         if (!id) {
           res.status(400).json({ error: 'ID is required' });
           return;
         }
-        // Implementation for by-id if needed
-        res.status(200).json({ message: 'by-id endpoint' });
+
+        // ID에서 인덱스 추출 (file_0 -> 0)
+        const match = id.match(/^file_(\d+)$/);
+        if (!match) {
+          res.status(400).json({ error: 'Invalid file ID format' });
+          return;
+        }
+
+        const fileIndex = parseInt(match[1], 10);
+        
+        // 파일 목록 가져오기
+        const fileList = await redisClient.get('files:list');
+        if (!fileList) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        const files = JSON.parse(fileList);
+        if (fileIndex < 0 || fileIndex >= files.length) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        const file = files[fileIndex];
+        const filename = file.filename || file.Filename || file.name;
+        
+        // 파일 내용 가져오기
+        const content = await redisClient.get(`file:${filename}`);
+        if (!content) {
+          res.status(404).json({ error: 'File content not found' });
+          return;
+        }
+
+        // 다운로드 여부 확인
+        const download = url.searchParams.get('download') === 'true';
+        if (download) {
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.setHeader('Content-Type', 'application/octet-stream');
+        } else {
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        }
+        
+        res.status(200).send(content);
         return;
       }
 
