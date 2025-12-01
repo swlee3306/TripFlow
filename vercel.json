@@ -6,7 +6,15 @@
       "dest": "/api/exchange.js"
     },
     {
+      "src": "/api/exchange",
+      "dest": "/api/exchange.js"
+    },
+    {
       "src": "/api/expenses/(.*)",
+      "dest": "/api/expenses.js"
+    },
+    {
+      "src": "/api/expenses",
       "dest": "/api/expenses.js"
     },
     {

@@ -106,6 +106,60 @@ export default async function handler(req, res) {
         return;
       }
 
+      // DELETE /api/files/by-id - Delete file by ID
+      if (req.method === 'DELETE' && isById) {
+        const id = url.searchParams.get('id');
+        if (!id) {
+          res.status(400).json({ error: 'ID is required' });
+          return;
+        }
+
+        // ID에서 인덱스 추출 (file_0 -> 0)
+        const match = id.match(/^file_(\d+)$/);
+        if (!match) {
+          res.status(400).json({ error: 'Invalid file ID format' });
+          return;
+        }
+
+        const fileIndex = parseInt(match[1], 10);
+        
+        // 파일 목록 가져오기
+        const fileList = await redisClient.get('files:list');
+        if (!fileList) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        const files = JSON.parse(fileList);
+        if (fileIndex < 0 || fileIndex >= files.length) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        const file = files[fileIndex];
+        const filename = file.filename || file.Filename || file.name;
+
+        // Security check
+        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+          res.status(400).json({ error: 'Invalid filename', message: '잘못된 파일명입니다' });
+          return;
+        }
+
+        // 파일 내용 삭제
+        await redisClient.del(`file:${filename}`);
+
+        // 파일 목록에서 제거
+        const updatedFiles = files.filter((f, index) => index !== fileIndex);
+        await redisClient.set('files:list', JSON.stringify(updatedFiles));
+
+        res.status(200).json({
+          success: true,
+          filename: filename,
+          message: '파일이 성공적으로 삭제되었습니다',
+        });
+        return;
+      }
+
       // GET /api/files/:filename - Get specific file
       if (req.method === 'GET' && filename) {
         const content = await redisClient.get(`file:${filename}`);
