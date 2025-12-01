@@ -55,60 +55,95 @@ export default async function handler(req, res) {
 
       // GET /api/files/by-id - Get file by ID
       if (req.method === 'GET' && isById) {
-        const id = url.searchParams.get('id');
-        if (!id) {
-          res.status(400).json({ error: 'ID is required' });
-          return;
-        }
+        try {
+          const id = url.searchParams.get('id');
+          if (!id) {
+            res.status(400).json({ error: 'ID is required' });
+            return;
+          }
 
-        // ID에서 인덱스 추출 (file_0 -> 0)
-        const match = id.match(/^file_(\d+)$/);
-        if (!match) {
-          res.status(400).json({ error: 'Invalid file ID format' });
-          return;
-        }
+          // ID에서 인덱스 추출 (file_0 -> 0)
+          const match = id.match(/^file_(\d+)$/);
+          if (!match) {
+            res.status(400).json({ error: 'Invalid file ID format' });
+            return;
+          }
 
-        const fileIndex = parseInt(match[1], 10);
-        
-        // 파일 목록 가져오기
-        const fileList = await redisClient.get('files:list');
-        if (!fileList) {
-          res.status(404).json({ error: 'File not found' });
-          return;
-        }
+          const fileIndex = parseInt(match[1], 10);
+          
+          // 파일 목록 가져오기
+          const fileList = await redisClient.get('files:list');
+          if (!fileList) {
+            res.status(404).json({ error: 'File not found', message: '파일 목록이 비어있습니다' });
+            return;
+          }
 
-        const files = JSON.parse(fileList);
-        if (fileIndex < 0 || fileIndex >= files.length) {
-          res.status(404).json({ error: 'File not found' });
-          return;
-        }
+          let files;
+          try {
+            files = JSON.parse(fileList);
+          } catch (parseError) {
+            console.error('Failed to parse file list:', parseError);
+            res.status(500).json({ error: 'Failed to parse file list', message: '파일 목록 파싱 중 오류가 발생했습니다' });
+            return;
+          }
 
-        const file = files[fileIndex];
-        const filename = file.filename || file.Filename || file.name;
-        
-        if (!filename) {
-          res.status(404).json({ error: 'File not found', message: '파일명을 찾을 수 없습니다' });
-          return;
-        }
-        
-        // 파일 내용 가져오기
-        const content = await redisClient.get(`file:${filename}`);
-        if (!content) {
-          res.status(404).json({ error: 'File content not found', message: '파일 내용을 찾을 수 없습니다' });
-          return;
-        }
+          if (!Array.isArray(files)) {
+            console.error('File list is not an array:', typeof files);
+            res.status(500).json({ error: 'Invalid file list format', message: '파일 목록 형식이 올바르지 않습니다' });
+            return;
+          }
 
-        // 다운로드 여부 확인
-        const download = url.searchParams.get('download') === 'true';
-        if (download) {
-          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-          res.setHeader('Content-Type', 'application/octet-stream');
-        } else {
-          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          if (fileIndex < 0 || fileIndex >= files.length) {
+            res.status(404).json({ 
+              error: 'File not found', 
+              message: `파일 인덱스 ${fileIndex}가 범위를 벗어났습니다 (총 ${files.length}개 파일)` 
+            });
+            return;
+          }
+
+          const file = files[fileIndex];
+          if (!file) {
+            res.status(404).json({ error: 'File not found', message: '파일 정보를 찾을 수 없습니다' });
+            return;
+          }
+
+          const filename = file.filename || file.Filename || file.name;
+          
+          if (!filename || filename === 'unknown') {
+            res.status(404).json({ error: 'File not found', message: '파일명을 찾을 수 없습니다' });
+            return;
+          }
+          
+          // 파일 내용 가져오기
+          const content = await redisClient.get(`file:${filename}`);
+          if (content === null || content === undefined) {
+            res.status(404).json({ 
+              error: 'File content not found', 
+              message: `파일 내용을 찾을 수 없습니다: ${filename}` 
+            });
+            return;
+          }
+
+          // 다운로드 여부 확인
+          const download = url.searchParams.get('download') === 'true';
+          if (download) {
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.setHeader('Content-Type', 'application/octet-stream');
+          } else {
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          }
+          
+          res.status(200).send(content);
+          return;
+        } catch (error) {
+          console.error('Error in GET /api/files/by-id:', error);
+          res.status(500).json({ 
+            error: 'Internal server error', 
+            message: '파일 조회 중 오류가 발생했습니다',
+            details: error.message 
+          });
+          return;
         }
-        
-        res.status(200).send(content);
-        return;
       }
 
       // PUT /api/files/by-id - Update file by ID
