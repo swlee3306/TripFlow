@@ -86,10 +86,15 @@ export default async function handler(req, res) {
         const file = files[fileIndex];
         const filename = file.filename || file.Filename || file.name;
         
+        if (!filename) {
+          res.status(404).json({ error: 'File not found', message: '파일명을 찾을 수 없습니다' });
+          return;
+        }
+        
         // 파일 내용 가져오기
         const content = await redisClient.get(`file:${filename}`);
         if (!content) {
-          res.status(404).json({ error: 'File content not found' });
+          res.status(404).json({ error: 'File content not found', message: '파일 내용을 찾을 수 없습니다' });
           return;
         }
 
@@ -103,6 +108,79 @@ export default async function handler(req, res) {
         }
         
         res.status(200).send(content);
+        return;
+      }
+
+      // PUT /api/files/by-id - Update file by ID
+      if (req.method === 'PUT' && isById) {
+        const id = url.searchParams.get('id');
+        if (!id) {
+          res.status(400).json({ error: 'ID is required' });
+          return;
+        }
+
+        // ID에서 인덱스 추출 (file_0 -> 0)
+        const match = id.match(/^file_(\d+)$/);
+        if (!match) {
+          res.status(400).json({ error: 'Invalid file ID format' });
+          return;
+        }
+
+        const fileIndex = parseInt(match[1], 10);
+        
+        // 파일 목록 가져오기
+        const fileList = await redisClient.get('files:list');
+        if (!fileList) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        const files = JSON.parse(fileList);
+        if (fileIndex < 0 || fileIndex >= files.length) {
+          res.status(404).json({ error: 'File not found' });
+          return;
+        }
+
+        const file = files[fileIndex];
+        const filename = file.filename || file.Filename || file.name;
+
+        if (!filename) {
+          res.status(404).json({ error: 'File not found', message: '파일명을 찾을 수 없습니다' });
+          return;
+        }
+
+        // Security check
+        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+          res.status(400).json({ error: 'Invalid filename', message: '잘못된 파일명입니다' });
+          return;
+        }
+
+        // 요청 본문에서 content 가져오기
+        const { content } = req.body;
+        if (!content) {
+          res.status(400).json({ error: 'Content is required', message: '요청 데이터가 올바르지 않습니다' });
+          return;
+        }
+
+        // 파일 내용 업데이트
+        await redisClient.set(`file:${filename}`, content);
+
+        // 파일 목록 업데이트
+        const now = new Date().toISOString();
+        files[fileIndex] = {
+          filename: filename,
+          content: content,
+          size: content.length,
+          created_at: file.created_at || now,
+        };
+
+        await redisClient.set('files:list', JSON.stringify(files));
+
+        res.status(200).json({
+          success: true,
+          filename: filename,
+          message: '파일이 성공적으로 업데이트되었습니다',
+        });
         return;
       }
 
