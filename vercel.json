@@ -46,6 +46,10 @@
       "dest": "/api/checklists/index.js"
     },
     {
+      "src": "/api/upload",
+      "dest": "/api/upload.js"
+    },
+    {
       "src": "/markdown-files/(.*)",
       "dest": "/frontend/public/markdown-files/$1"
     },
