@@ -127,7 +127,9 @@ export default async function handler(req, res) {
           // 다운로드 여부 확인
           const download = url.searchParams.get('download') === 'true';
           if (download) {
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            // RFC 5987 형식으로 파일명 인코딩 (한글 및 특수문자 지원)
+            const encodedFilename = encodeURIComponent(filename);
+            res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
             res.setHeader('Content-Type', 'application/octet-stream');
           } else {
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -279,7 +281,9 @@ export default async function handler(req, res) {
         if (content) {
           const download = url.searchParams.get('download') === 'true';
           if (download) {
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            // RFC 5987 형식으로 파일명 인코딩 (한글 및 특수문자 지원)
+            const encodedFilename = encodeURIComponent(filename);
+            res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
             res.setHeader('Content-Type', 'application/octet-stream');
           } else {
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
