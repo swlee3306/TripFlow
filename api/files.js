@@ -2,7 +2,7 @@
 import { createClient } from 'redis';
 import busboy from 'busboy';
 
-const REDIS_URL = 'redis://default:REDACTED_REDIS_PASSWORD@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928';
+const REDIS_URL = process.env.REDIS_URL;
 
 function setCORSHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -390,4 +390,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Internal server error', message: '서버 오류가 발생했습니다' });
   }
 }
-

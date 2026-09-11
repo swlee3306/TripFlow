@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"tripflow/internal/models"
@@ -19,16 +20,16 @@ var checklistRedisClient *redis.Client
 
 // initChecklistRedis initializes Redis Cloud client for checklists
 func initChecklistRedis() {
-	redisURL := "redis://default:REDACTED_REDIS_PASSWORD@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
-	
+	redisURL := os.Getenv("REDIS_URL")
+
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		fmt.Printf("Failed to parse Redis URL: %v", err)
 		return
 	}
-	
+
 	checklistRedisClient = redis.NewClient(opt)
-	
+
 	// Test connection
 	ctx := context.Background()
 	_, err = checklistRedisClient.Ping(ctx).Result()
@@ -122,7 +123,7 @@ type ChecklistHandler struct {
 func NewChecklistHandler(redisClient *redis.Client) *ChecklistHandler {
 	// Initialize Redis Cloud connection
 	initChecklistRedis()
-	
+
 	return &ChecklistHandler{
 		redisClient: redisClient,
 	}
@@ -342,7 +343,7 @@ func (h *ChecklistHandler) DeleteChecklist(c *gin.Context) {
 	}
 
 	key := fmt.Sprintf("checklist:%s", id)
-	
+
 	// Check if checklist exists
 	_, err := checklistKvGet(key)
 	if err != nil {

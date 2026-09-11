@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,16 +33,16 @@ var redisClient *redis.Client
 
 // initRedis initializes Redis Cloud client
 func initRedis() {
-	redisURL := "redis://default:REDACTED_REDIS_PASSWORD@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
-	
+	redisURL := os.Getenv("REDIS_URL")
+
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		fmt.Printf("Failed to parse Redis URL: %v", err)
 		return
 	}
-	
+
 	redisClient = redis.NewClient(opt)
-	
+
 	// Test connection
 	ctx := context.Background()
 	_, err = redisClient.Ping(ctx).Result()
@@ -119,7 +120,7 @@ type ExpenseHandler struct {
 func NewExpenseHandler(redisClient *redis.Client) *ExpenseHandler {
 	// Initialize Redis Cloud connection
 	initRedis()
-	
+
 	return &ExpenseHandler{
 		redisClient: redisClient,
 	}
@@ -365,7 +366,7 @@ func (h *ExpenseHandler) GetExpenseStats(c *gin.Context) {
 
 	var totalSpent float64
 	categoryStats := make(map[string]float64)
-	
+
 	for _, expense := range expenses {
 		totalSpent += expense.Amount
 		categoryStats[expense.Category] += expense.Amount
@@ -383,8 +384,8 @@ func (h *ExpenseHandler) GetExpenseStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"total_spent":      totalSpent,
-		"budget":          budget,
+		"budget":           budget,
 		"remaining_budget": budget - totalSpent,
-		"category_stats":  categoryStats,
+		"category_stats":   categoryStats,
 	})
 }

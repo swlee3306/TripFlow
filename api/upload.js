@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   try {
     // Connect to Redis Cloud
     const redisClient = createClient({
-      url: 'redis://default:REDACTED_REDIS_PASSWORD@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928'
+      url: process.env.REDIS_URL
     });
 
     await redisClient.connect();
@@ -179,4 +179,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

@@ -38,25 +38,25 @@ func main() {
 
 	// Add security middleware
 	router.Use(middleware.RequestIDMiddleware(nil))
-	
+
 	// Add CORS middleware
 	router.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-CSRF-Token, X-Request-ID")
-		
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
-		
+
 		c.Next()
 	})
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"status": "ok",
+			"status":  "ok",
 			"message": "TripFlow API is running",
 		})
 	})
@@ -68,15 +68,15 @@ func main() {
 	}
 
 	// Initialize Redis client (Redis Cloud)
-	redisURL := "redis://default:REDACTED_REDIS_PASSWORD@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
-	
+	redisURL := os.Getenv("REDIS_URL")
+
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		log.Fatalf("Failed to parse Redis URL: %v", err)
 	}
-	
+
 	redisClient := redis.NewClient(opt)
-	
+
 	// Test Redis connection
 	ctx := context.Background()
 	_, err = redisClient.Ping(ctx).Result()
@@ -103,7 +103,7 @@ func main() {
 	{
 		// CSRF token endpoint (must be accessible without CSRF protection)
 		api.GET("/csrf", middleware.CSRFInfoHandler)
-		
+
 		// Authentication routes with login rate limiting
 		auth := api.Group("/auth")
 		auth.Use(middleware.CreateRateLimitMiddleware(middleware.LoginRateLimitConfig()))
@@ -150,23 +150,23 @@ func main() {
 	protected.Use(middleware.CreateRateLimitMiddleware(middleware.AuthenticatedRateLimitConfig()))
 	protected.Use(middleware.CSRFMiddleware(nil))
 	{
-			// Example protected endpoint
-			protected.GET("/dashboard", func(c *gin.Context) {
-				userID, _ := middleware.GetUserIDFromContext(c)
-				userRole, _ := middleware.GetUserRoleFromContext(c)
-				
-				c.JSON(200, gin.H{
-					"message": "Welcome to admin dashboard",
-					"user_id": userID,
-					"user_role": userRole,
-				})
-			})
+		// Example protected endpoint
+		protected.GET("/dashboard", func(c *gin.Context) {
+			userID, _ := middleware.GetUserIDFromContext(c)
+			userRole, _ := middleware.GetUserRoleFromContext(c)
 
-			// File management endpoints (admin only)
-			files := protected.Group("/file")
-			{
-				files.DELETE("/:path", fileHandler.DeleteFile)
-			}
+			c.JSON(200, gin.H{
+				"message":   "Welcome to admin dashboard",
+				"user_id":   userID,
+				"user_role": userRole,
+			})
+		})
+
+		// File management endpoints (admin only)
+		files := protected.Group("/file")
+		{
+			files.DELETE("/:path", fileHandler.DeleteFile)
+		}
 	}
 
 	// User routes (require authentication but not admin)
@@ -189,7 +189,7 @@ func main() {
 	log.Printf("🚀 Starting TripFlow API server on port %s", port)
 	log.Printf("📊 Health check: http://localhost:%s/health", port)
 	log.Printf("🔐 Admin login: http://localhost:%s/api/auth/login", port)
-	
+
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

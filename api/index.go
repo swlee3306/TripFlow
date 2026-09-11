@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -20,22 +21,22 @@ import (
 var router *gin.Engine
 
 // Redis configuration
-var redisURL = "redis://default:REDACTED_REDIS_PASSWORD@redis-17928.c57.us-east-1-4.ec2.redns.redis-cloud.com:17928"
+var redisURL = os.Getenv("REDIS_URL")
 var redisClient *redis.Client
 
 // initRedis initializes Redis client
 func initRedis() {
 	log.Printf("Initializing Redis connection...")
-	
+
 	// Parse Redis URL
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		log.Printf("Failed to parse Redis URL: %v", err)
 		return
 	}
-	
+
 	redisClient = redis.NewClient(opt)
-	
+
 	// Test connection
 	ctx := context.Background()
 	_, err = redisClient.Ping(ctx).Result()
@@ -53,7 +54,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if router == nil {
 		initRouter()
 	}
-	
+
 	// Serve the request using Gin router
 	router.ServeHTTP(w, r)
 }
@@ -74,265 +75,265 @@ func initRouter() {
 	{
 		// Exchange Rate API
 		api.GET("/exchange/rates", func(c *gin.Context) {
-		base := c.Query("base")
-		if base == "" {
-			base = "KRW"
-		}
-		
-		// Mock exchange rates for demo
-		rates := map[string]float64{
-			"USD": 0.00075,
-			"EUR": 0.00069,
-			"JPY": 0.11,
-			"CNY": 0.0054,
-			"GBP": 0.00059,
-			"AUD": 0.0011,
-			"CAD": 0.0010,
-		}
-		
-		c.JSON(200, gin.H{
-			"base": base,
-			"date": time.Now().Format("2006-01-02"),
-			"rates": rates,
-		})
-	})
-
-	api.GET("/exchange/convert", func(c *gin.Context) {
-		from := c.Query("from")
-		to := c.Query("to")
-		amountStr := c.Query("amount")
-		
-		if from == "" || to == "" || amountStr == "" {
-			c.JSON(400, gin.H{
-				"error": "Missing required parameters",
-			})
-			return
-		}
-		
-		amount, err := strconv.ParseFloat(amountStr, 64)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"error": "Invalid amount",
-			})
-			return
-		}
-		
-		// Mock conversion (simplified)
-		convertedAmount := amount * 0.00075 // Mock rate
-		
-		c.JSON(200, gin.H{
-			"from": from,
-			"to": to,
-			"amount": amount,
-			"converted_amount": convertedAmount,
-		})
-	})
-
-	// Expense API
-	api.GET("/expenses", func(c *gin.Context) {
-		expenses, err := kvGet("expenses:list")
-		if err != nil {
-			c.JSON(200, gin.H{
-				"expenses": []gin.H{},
-			})
-			return
-		}
-		
-		var expenseList []gin.H
-		if expenses != "" {
-			json.Unmarshal([]byte(expenses), &expenseList)
-		}
-		
-		c.JSON(200, gin.H{
-			"expenses": expenseList,
-		})
-	})
-
-	api.POST("/expenses", func(c *gin.Context) {
-		var expense gin.H
-		if err := c.ShouldBindJSON(&expense); err != nil {
-			c.JSON(400, gin.H{
-				"error": "Invalid request body",
-			})
-			return
-		}
-		
-		// Get existing expenses
-		expenses, err := kvGet("expenses:list")
-		var expenseList []gin.H
-		if err == nil && expenses != "" {
-			json.Unmarshal([]byte(expenses), &expenseList)
-		}
-		
-		// Add new expense
-		expenseList = append(expenseList, expense)
-		
-		// Save back to Redis
-		expenseData, _ := json.Marshal(expenseList)
-		kvSet("expenses:list", string(expenseData))
-		
-		c.JSON(200, gin.H{
-			"message": "Expense added successfully",
-			"expense": expense,
-		})
-	})
-
-	api.DELETE("/expenses/:id", func(c *gin.Context) {
-		expenseId := c.Param("id")
-		
-		// Get existing expenses
-		expenses, err := kvGet("expenses:list")
-		if err != nil {
-			c.JSON(404, gin.H{
-				"error": "No expenses found",
-			})
-			return
-		}
-		
-		var expenseList []gin.H
-		json.Unmarshal([]byte(expenses), &expenseList)
-		
-		// Filter out the expense to delete
-		var filteredExpenses []gin.H
-		for _, expense := range expenseList {
-			if expense["id"] != expenseId {
-				filteredExpenses = append(filteredExpenses, expense)
+			base := c.Query("base")
+			if base == "" {
+				base = "KRW"
 			}
-		}
-		
-		// Save back to Redis
-		expenseData, _ := json.Marshal(filteredExpenses)
-		kvSet("expenses:list", string(expenseData))
-		
-		c.JSON(200, gin.H{
-			"message": "Expense deleted successfully",
-		})
-	})
 
-	api.GET("/expenses/budget", func(c *gin.Context) {
-		budget, err := kvGet("budget")
-		if err != nil {
-			c.JSON(200, gin.H{
-				"budget": 0,
-			})
-			return
-		}
-		
-		var budgetAmount float64
-		json.Unmarshal([]byte(budget), &budgetAmount)
-		
-		c.JSON(200, gin.H{
-			"budget": budgetAmount,
-		})
-	})
-
-	api.POST("/expenses/budget", func(c *gin.Context) {
-		var budgetData gin.H
-		if err := c.ShouldBindJSON(&budgetData); err != nil {
-			c.JSON(400, gin.H{
-				"error": "Invalid request body",
-			})
-			return
-		}
-		
-		budgetAmount := budgetData["budget"]
-		budgetJson, _ := json.Marshal(budgetAmount)
-		kvSet("budget", string(budgetJson))
-		
-		c.JSON(200, gin.H{
-			"message": "Budget set successfully",
-			"budget": budgetAmount,
-		})
-	})
-
-	api.GET("/expenses/stats", func(c *gin.Context) {
-		expenses, err := kvGet("expenses:list")
-		if err != nil {
-			c.JSON(200, gin.H{
-				"total_expenses": 0,
-				"category_breakdown": gin.H{},
-				"daily_breakdown": gin.H{},
-			})
-			return
-		}
-		
-		var expenseList []gin.H
-		json.Unmarshal([]byte(expenses), &expenseList)
-		
-		totalExpenses := 0.0
-		categoryBreakdown := gin.H{}
-		dailyBreakdown := gin.H{}
-		
-		for _, expense := range expenseList {
-			if amount, ok := expense["amount"].(float64); ok {
-				totalExpenses += amount
+			// Mock exchange rates for demo
+			rates := map[string]float64{
+				"USD": 0.00075,
+				"EUR": 0.00069,
+				"JPY": 0.11,
+				"CNY": 0.0054,
+				"GBP": 0.00059,
+				"AUD": 0.0011,
+				"CAD": 0.0010,
 			}
-			
-			if category, ok := expense["category"].(string); ok {
-				if current, exists := categoryBreakdown[category]; exists {
-					categoryBreakdown[category] = current.(float64) + expense["amount"].(float64)
-				} else {
-					categoryBreakdown[category] = expense["amount"]
+
+			c.JSON(200, gin.H{
+				"base":  base,
+				"date":  time.Now().Format("2006-01-02"),
+				"rates": rates,
+			})
+		})
+
+		api.GET("/exchange/convert", func(c *gin.Context) {
+			from := c.Query("from")
+			to := c.Query("to")
+			amountStr := c.Query("amount")
+
+			if from == "" || to == "" || amountStr == "" {
+				c.JSON(400, gin.H{
+					"error": "Missing required parameters",
+				})
+				return
+			}
+
+			amount, err := strconv.ParseFloat(amountStr, 64)
+			if err != nil {
+				c.JSON(400, gin.H{
+					"error": "Invalid amount",
+				})
+				return
+			}
+
+			// Mock conversion (simplified)
+			convertedAmount := amount * 0.00075 // Mock rate
+
+			c.JSON(200, gin.H{
+				"from":             from,
+				"to":               to,
+				"amount":           amount,
+				"converted_amount": convertedAmount,
+			})
+		})
+
+		// Expense API
+		api.GET("/expenses", func(c *gin.Context) {
+			expenses, err := kvGet("expenses:list")
+			if err != nil {
+				c.JSON(200, gin.H{
+					"expenses": []gin.H{},
+				})
+				return
+			}
+
+			var expenseList []gin.H
+			if expenses != "" {
+				json.Unmarshal([]byte(expenses), &expenseList)
+			}
+
+			c.JSON(200, gin.H{
+				"expenses": expenseList,
+			})
+		})
+
+		api.POST("/expenses", func(c *gin.Context) {
+			var expense gin.H
+			if err := c.ShouldBindJSON(&expense); err != nil {
+				c.JSON(400, gin.H{
+					"error": "Invalid request body",
+				})
+				return
+			}
+
+			// Get existing expenses
+			expenses, err := kvGet("expenses:list")
+			var expenseList []gin.H
+			if err == nil && expenses != "" {
+				json.Unmarshal([]byte(expenses), &expenseList)
+			}
+
+			// Add new expense
+			expenseList = append(expenseList, expense)
+
+			// Save back to Redis
+			expenseData, _ := json.Marshal(expenseList)
+			kvSet("expenses:list", string(expenseData))
+
+			c.JSON(200, gin.H{
+				"message": "Expense added successfully",
+				"expense": expense,
+			})
+		})
+
+		api.DELETE("/expenses/:id", func(c *gin.Context) {
+			expenseId := c.Param("id")
+
+			// Get existing expenses
+			expenses, err := kvGet("expenses:list")
+			if err != nil {
+				c.JSON(404, gin.H{
+					"error": "No expenses found",
+				})
+				return
+			}
+
+			var expenseList []gin.H
+			json.Unmarshal([]byte(expenses), &expenseList)
+
+			// Filter out the expense to delete
+			var filteredExpenses []gin.H
+			for _, expense := range expenseList {
+				if expense["id"] != expenseId {
+					filteredExpenses = append(filteredExpenses, expense)
 				}
 			}
-		}
-		
-		c.JSON(200, gin.H{
-			"total_expenses": totalExpenses,
-			"category_breakdown": categoryBreakdown,
-			"daily_breakdown": dailyBreakdown,
-		})
-	})
-	
-	// CORS middleware
-	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		
-		c.Next()
-	})
 
-	// Health check endpoint
-	router.GET("/health", func(c *gin.Context) {
-		redisStatus := "disconnected"
-		if redisClient != nil {
-			ctx := context.Background()
-			_, err := redisClient.Ping(ctx).Result()
-			if err == nil {
-				redisStatus = "connected"
-			} else {
-				redisStatus = "error: " + err.Error()
-			}
-		}
-		
-		c.JSON(200, gin.H{
-			"status": "ok",
-			"message": "TripFlow API is running",
-			"redis": redisStatus,
+			// Save back to Redis
+			expenseData, _ := json.Marshal(filteredExpenses)
+			kvSet("expenses:list", string(expenseData))
+
+			c.JSON(200, gin.H{
+				"message": "Expense deleted successfully",
+			})
 		})
-	})
+
+		api.GET("/expenses/budget", func(c *gin.Context) {
+			budget, err := kvGet("budget")
+			if err != nil {
+				c.JSON(200, gin.H{
+					"budget": 0,
+				})
+				return
+			}
+
+			var budgetAmount float64
+			json.Unmarshal([]byte(budget), &budgetAmount)
+
+			c.JSON(200, gin.H{
+				"budget": budgetAmount,
+			})
+		})
+
+		api.POST("/expenses/budget", func(c *gin.Context) {
+			var budgetData gin.H
+			if err := c.ShouldBindJSON(&budgetData); err != nil {
+				c.JSON(400, gin.H{
+					"error": "Invalid request body",
+				})
+				return
+			}
+
+			budgetAmount := budgetData["budget"]
+			budgetJson, _ := json.Marshal(budgetAmount)
+			kvSet("budget", string(budgetJson))
+
+			c.JSON(200, gin.H{
+				"message": "Budget set successfully",
+				"budget":  budgetAmount,
+			})
+		})
+
+		api.GET("/expenses/stats", func(c *gin.Context) {
+			expenses, err := kvGet("expenses:list")
+			if err != nil {
+				c.JSON(200, gin.H{
+					"total_expenses":     0,
+					"category_breakdown": gin.H{},
+					"daily_breakdown":    gin.H{},
+				})
+				return
+			}
+
+			var expenseList []gin.H
+			json.Unmarshal([]byte(expenses), &expenseList)
+
+			totalExpenses := 0.0
+			categoryBreakdown := gin.H{}
+			dailyBreakdown := gin.H{}
+
+			for _, expense := range expenseList {
+				if amount, ok := expense["amount"].(float64); ok {
+					totalExpenses += amount
+				}
+
+				if category, ok := expense["category"].(string); ok {
+					if current, exists := categoryBreakdown[category]; exists {
+						categoryBreakdown[category] = current.(float64) + expense["amount"].(float64)
+					} else {
+						categoryBreakdown[category] = expense["amount"]
+					}
+				}
+			}
+
+			c.JSON(200, gin.H{
+				"total_expenses":     totalExpenses,
+				"category_breakdown": categoryBreakdown,
+				"daily_breakdown":    dailyBreakdown,
+			})
+		})
+
+		// CORS middleware
+		router.Use(func(c *gin.Context) {
+			c.Header("Access-Control-Allow-Origin", "*")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if c.Request.Method == "OPTIONS" {
+				c.AbortWithStatus(204)
+				return
+			}
+
+			c.Next()
+		})
+
+		// Health check endpoint
+		router.GET("/health", func(c *gin.Context) {
+			redisStatus := "disconnected"
+			if redisClient != nil {
+				ctx := context.Background()
+				_, err := redisClient.Ping(ctx).Result()
+				if err == nil {
+					redisStatus = "connected"
+				} else {
+					redisStatus = "error: " + err.Error()
+				}
+			}
+
+			c.JSON(200, gin.H{
+				"status":  "ok",
+				"message": "TripFlow API is running",
+				"redis":   redisStatus,
+			})
+		})
 
 		api.GET("/schedules", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"schedules": []gin.H{},
-				"total": 0,
-				"page": 1,
-				"limit": 10,
+				"total":     0,
+				"page":      1,
+				"limit":     10,
 			})
 		})
-		
+
 		api.GET("/schedules/:id", func(c *gin.Context) {
 			c.JSON(200, gin.H{
-				"id": c.Param("id"),
-				"title": "Sample Schedule",
+				"id":          c.Param("id"),
+				"title":       "Sample Schedule",
 				"description": "This is a sample schedule",
-				"is_public": true,
+				"is_public":   true,
 			})
 		})
 
@@ -341,7 +342,7 @@ func initRouter() {
 			files, err := getMarkdownFiles()
 			if err != nil {
 				c.JSON(500, gin.H{
-					"error": "Failed to read files",
+					"error":   "Failed to read files",
 					"message": "파일 목록을 불러올 수 없습니다",
 				})
 				return
@@ -355,12 +356,12 @@ func initRouter() {
 			content, err := getMarkdownFile(filename)
 			if err != nil {
 				c.JSON(404, gin.H{
-					"error": "File not found",
+					"error":   "File not found",
 					"message": "파일을 찾을 수 없습니다",
 				})
 				return
 			}
-			
+
 			// Check if this is a download request
 			download := c.Query("download")
 			if download == "true" {
@@ -371,18 +372,18 @@ func initRouter() {
 				// Set headers for viewing
 				c.Header("Content-Type", "text/plain; charset=utf-8")
 			}
-			
+
 			c.String(200, content)
 		})
 
 		// Update markdown file content
 		api.PUT("/files/:filename", func(c *gin.Context) {
 			filename := c.Param("filename")
-			
+
 			// Security check: prevent directory traversal
 			if strings.Contains(filename, "..") || strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
 				c.JSON(400, gin.H{
-					"error": "Invalid filename",
+					"error":   "Invalid filename",
 					"message": "잘못된 파일명입니다",
 				})
 				return
@@ -395,7 +396,7 @@ func initRouter() {
 
 			if err := c.ShouldBindJSON(&requestBody); err != nil {
 				c.JSON(400, gin.H{
-					"error": "Invalid request body",
+					"error":   "Invalid request body",
 					"message": "요청 데이터가 올바르지 않습니다",
 				})
 				return
@@ -405,48 +406,48 @@ func initRouter() {
 			if err := saveMarkdownFile(filename, requestBody.Content, int64(len(requestBody.Content))); err != nil {
 				log.Printf("Failed to update file: %v", err)
 				c.JSON(500, gin.H{
-					"error": "Failed to update file",
+					"error":   "Failed to update file",
 					"message": "파일 업데이트 중 오류가 발생했습니다",
 					"details": err.Error(),
 				})
 				return
 			}
-			
+
 			c.JSON(200, gin.H{
-				"success": true,
+				"success":  true,
 				"filename": filename,
-				"message": "파일이 성공적으로 업데이트되었습니다",
+				"message":  "파일이 성공적으로 업데이트되었습니다",
 			})
 		})
 
 		// Delete markdown file
 		api.DELETE("/files/:filename", func(c *gin.Context) {
 			filename := c.Param("filename")
-			
+
 			// Security check: prevent directory traversal
 			if strings.Contains(filename, "..") || strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
 				c.JSON(400, gin.H{
-					"error": "Invalid filename",
+					"error":   "Invalid filename",
 					"message": "잘못된 파일명입니다",
 				})
 				return
 			}
-			
+
 			// Delete file from Redis
 			if err := deleteMarkdownFile(filename); err != nil {
 				log.Printf("Failed to delete file: %v", err)
 				c.JSON(500, gin.H{
-					"error": "Failed to delete file",
+					"error":   "Failed to delete file",
 					"message": "파일 삭제 중 오류가 발생했습니다",
 					"details": err.Error(),
 				})
 				return
 			}
-			
+
 			c.JSON(200, gin.H{
-				"success": true,
+				"success":  true,
 				"filename": filename,
-				"message": "파일이 성공적으로 삭제되었습니다",
+				"message":  "파일이 성공적으로 삭제되었습니다",
 			})
 		})
 
@@ -455,7 +456,7 @@ func initRouter() {
 			file, err := c.FormFile("file")
 			if err != nil {
 				c.JSON(400, gin.H{
-					"error": "No file uploaded",
+					"error":   "No file uploaded",
 					"message": "파일을 선택해주세요",
 				})
 				return
@@ -474,7 +475,7 @@ func initRouter() {
 
 			if !isValidType {
 				c.JSON(400, gin.H{
-					"error": "Invalid file type",
+					"error":   "Invalid file type",
 					"message": "마크다운 또는 텍스트 파일만 업로드 가능합니다",
 				})
 				return
@@ -484,7 +485,7 @@ func initRouter() {
 			src, err := file.Open()
 			if err != nil {
 				c.JSON(500, gin.H{
-					"error": "Failed to read file",
+					"error":   "Failed to read file",
 					"message": "파일 읽기 중 오류가 발생했습니다",
 				})
 				return
@@ -494,7 +495,7 @@ func initRouter() {
 			content, err := io.ReadAll(src)
 			if err != nil {
 				c.JSON(500, gin.H{
-					"error": "Failed to read file content",
+					"error":   "Failed to read file content",
 					"message": "파일 내용 읽기 중 오류가 발생했습니다",
 				})
 				return
@@ -504,7 +505,7 @@ func initRouter() {
 			if err := saveMarkdownFile(file.Filename, string(content), file.Size); err != nil {
 				log.Printf("Failed to save file: %v", err)
 				c.JSON(500, gin.H{
-					"error": "Failed to save file",
+					"error":   "Failed to save file",
 					"message": "파일 저장 중 오류가 발생했습니다",
 					"details": err.Error(),
 				})
@@ -512,10 +513,10 @@ func initRouter() {
 			}
 
 			c.JSON(200, gin.H{
-				"success": true,
+				"success":  true,
 				"filename": file.Filename,
-				"size": file.Size,
-				"message": "파일이 성공적으로 업로드되었습니다",
+				"size":     file.Size,
+				"message":  "파일이 성공적으로 업로드되었습니다",
 			})
 		})
 	}
