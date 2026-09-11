@@ -46,8 +46,10 @@ HOST=0.0.0.0
 RATE_LIMIT_REQUESTS=100
 RATE_LIMIT_WINDOW=1m
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=REPLACE_WITH_A_UNIQUE_ADMIN_PASSWORD
 ```
+
+위 비밀번호·시크릿은 설명용 placeholder입니다. 실제 사용 시 고유한 비밀값을 비밀 저장소에서 등록하고, 예시 문자열을 그대로 배포하지 마세요.
 
 ### 3. 빌드 설정
 
